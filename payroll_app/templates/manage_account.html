@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<nav class="navbar navbar-dark mb-3" style="background-color: #590404;">
+    <div class="d-flex align-items-center px-3" style="gap: 20px;">
+        <span class="navbar-brand">AstovC</span>
+        <a class="navbar-brand" href="{% url 'main_page' %}"><small>Invoice List</small></a>
+        <a class="navbar-brand" href="{% url 'create_invoice' %}"><small>Create Invoice</small></a>
+        <a class="navbar-brand" href="{% url 'profiles' %}"><small>Profiles</small></a>
+    </div>
+    <a class="navbar-brand" href="?logout=true"><small>Logout</small></a>     
+</nav>
+
+<div class="container" style="max-width: 900px;">
+    <div class="col-md-6 offset-md-3">
+        <h4>Manage Account</h4>
+        <p><b>Username:</b> {{ account.username }}</p>
+        <a href="{% url 'change_password' pk=account.pk %}" class="btn btn-warning">Change Password</a>
+        <a href="{% url 'delete_account' pk=user_id %}" class="btn btn-danger">Delete Account</a>
+        <a href="{% url 'main_page' %}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<nav class="navbar navbar-dark mb-3" style="background-color: #590404;">
+    <div class="d-flex align-items-center px-3" style="gap: 20px;">
+        <span class="navbar-brand">AstovC</span>
+    </div>        
+</nav>
+
+<div class="container" style="max-width: 900px;">
+    <div class="row justify-content-center">
+        <div class="card col-4">
+            <div class="card-body">
+                <h4 class="text-center">Login</h4>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-1 mb-2">Login</button>
+                </form>
+
+                {% if message == "Account created successfully" %}
+                    <div class="text-success text-center mt-2">{{ message }}</div>
+                {% else %}
+                    <div class="text-danger text-center mt-2">{{ message }}</div>
+                {% endif %}
+
+                <div class="text-center mt-3 mb-3">
+                    <p>Don't have an account? <a href="{% url 'signup' %}" class="text-decoration-none"><b>Sign up</b></a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

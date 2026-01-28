@@ -1,0 +1,807 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<nav class="navbar navbar-dark mb-3" style="background-color: #590404;">
+    <div class="d-flex align-items-center px-3" style="gap: 20px;">
+        <span class="navbar-brand">AstovC</span>
+        <a class="navbar-brand" href="{% url 'main_page' %}"><small>Invoice List</small></a>
+        <a class="navbar-brand" href="{% url 'create_invoice' %}"><small>Create Invoice</small></a>
+        <a class="navbar-brand" href="{% url 'profiles' %}"><small>Profiles</small></a>
+    </div>
+    <a class="navbar-brand" href="?logout=true"><small>Logout</small></a>     
+</nav>
+
+<div class="container" style="max-width: 1400px;">
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'product' %}active{% endif %}" href="?tab=product">
+                Products
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'customer' %}active{% endif %}" href="?tab=customer">
+                Customers
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'supplier' %}active{% endif %}" href="?tab=supplier">
+                Suppliers
+            </a>
+        </li>
+    </ul>
+
+    <!-- PRODUCTS TAB CONTENT -->
+    {% if active_tab == 'product' %}
+
+    <!-- Product Search/Create/Edit Form - Single Card -->
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <form id="productForm" method="POST" action="{% url 'product_create' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab" value="product">
+            <input type="hidden" id="product_id" name="product_id" value="">
+            <input type="hidden" id="is_edit_product" name="is_edit" value="false">
+            <input type="hidden" id="original_product_code" name="original_product_code" value="">
+            <input type="hidden" id="original_description" name="original_description" value="">
+            
+            <!-- Row 1: Product Code and Description -->
+            <div class="row g-2 mb-3">
+                <!-- Product Code -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <label for="product_code" class="form-label profile-fixed-label">Product Code</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="product_code" name="product_code"
+                            value="{{ request.GET.product_code|default:next_product_code }}" placeholder="Enter code">
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="col-md-9">
+                    <div class="d-flex align-items-center">
+                        <label for="description" class="form-label profile-fixed-label">Description</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="description" name="description"
+                            value="{{ request.GET.description }}" placeholder="Enter product description">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 2: Price, Quantity, Unit -->
+            <div class="row g-2 mb-3">
+                <!-- Price -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="price" class="form-label profile-fixed-label">Price</label>
+                        <input type="text" class="form-control form-control-sm text-end profile-fixed-input" id="price" name="price" 
+                            value="{{ request.GET.price }}" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <!-- Quantity -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="quantity" class="form-label profile-fixed-label">Quantity</label>
+                        <input type="number" class="form-control form-control-sm text-end profile-fixed-input" id="quantity" name="quantity"
+                            value="{{ request.GET.quantity|default:0 }}" placeholder="0">
+                    </div>
+                </div>
+                
+                <!-- Unit -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="unit" class="form-label profile-fixed-label">Unit</label>
+                        <select class="form-select form-select-sm profile-fixed-input" id="unit" name="unit">
+                            <option value="">Select Unit</option>
+                            <option value="PC">PC</option>
+                            <option value="PCS">PCS</option>
+                            <option value="BOX">BOX</option>
+                            <option value="SET">SET</option>
+                            <option value="KG">KG</option>
+                            <option value="LITER">LITER</option>
+                            <option value="METER">METER</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="row g-2">
+                <div class="col-md-12">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" id="clearBtnProduct" class="btn btn-sm profile-clear-btn">Clear</button>
+                        <button type="submit" id="saveBtnProduct" class="btn btn-sm profile-save-btn">Save</button>
+                        <button type="button" id="deleteBtnProduct" class="btn btn-sm profile-delete-btn" style="display: none;">Delete</button>
+                        <button type="submit" formaction="{% url 'profiles' %}?tab=product" class="btn btn-sm profile-search-btn">Search</button>
+                        <button type="button" id="reportBtnProduct" class="btn btn-sm profile-report-btn">Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Products Table -->
+    <div class="mx-auto" style="width: 80%">
+        <h6 class="mb-3 text-start">Product List</h6>
+    </div>
+    
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+            <table class="table mb-0" style="min-width: 800px;">
+                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                    <tr>
+                        <th width="100" class="text-center">Code</th>
+                        <th class="text-center">Description</th>
+                        <th width="150" class="text-center">Price</th>
+                        <th width="120" class="text-center">Quantity</th>
+                        <th width="120" class="text-center">Unit</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    {% for product in products %}
+                    <tr class="product-row" data-id="{{ product.id }}" 
+                        data-code="{{ product.product_code }}"
+                        data-description="{{ product.description }}"
+                        data-price="{{ product.price|default:0 }}"
+                        data-quantity="{{ product.quantity|default:0 }}"
+                        data-unit="{{ product.unit|default:'' }}">
+                        <td class="text-center"><strong>{{ product.product_code }}</strong></td>
+                        <td>{{ product.description }}</td>
+                        <td class="text-end">{{ product.price|floatformat:2 }}</td>
+                        <td class="text-center">{{ product.quantity }}</td>
+                        <td class="text-center">{{ product.unit|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            {% if request.GET %}
+                                No products found matching your search.
+                            {% else %}
+                                No products found. Create your first product above.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="mx-auto text-end" style="width: 80%">
+        <strong>Total Products: {{ products.count }}</strong>
+        {% if request.GET %}
+            <span class="text-muted"> - Filtered results</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- CUSTOMERS TAB CONTENT -->
+    {% if active_tab == 'customer' %}
+
+    <!-- Customer Search/Create/Edit Form - Single Card -->
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <form id="customerForm" method="POST" action="{% url 'customer_create' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab" value="customer">
+            <input type="hidden" id="customer_id" name="customer_id" value="">
+            <input type="hidden" id="is_edit_customer" name="is_edit" value="false">
+            <input type="hidden" id="original_customer_code" name="original_code" value="">
+            <input type="hidden" id="original_company_name" name="original_name" value="">
+            
+            <!-- Row 1: Customer Code and Name -->
+            <div class="row g-2 mb-3">
+                <!-- Customer Code -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <label for="customer_code" class="form-label profile-fixed-label">Customer Code</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="customer_code" name="customer_code"
+                            value="{{ request.GET.customer_code|default:next_customer_code }}" placeholder="Enter code">
+                    </div>
+                </div>
+                
+                <!-- Company Name -->
+                <div class="col-md-9">
+                    <div class="d-flex align-items-center">
+                        <label for="company_name" class="form-label profile-fixed-label">Name</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="company_name" name="company_name"
+                            value="{{ request.GET.company_name }}" placeholder="Enter company name">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 2: Contact Person, Phone, Area -->
+            <div class="row g-2 mb-3">
+                <!-- Contact Person -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="contact_person" class="form-label profile-fixed-label">Contact Person</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="contact_person" name="contact_person"
+                            value="{{ request.GET.contact_person }}" placeholder="Enter contact person">
+                    </div>
+                </div>
+                
+                <!-- Phone -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="phone" class="form-label profile-fixed-label">Phone #</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="phone" name="phone"
+                            value="{{ request.GET.phone }}" placeholder="09XXXXXXXXXX">
+                    </div>
+                </div>
+                
+                <!-- Area -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="area" class="form-label profile-fixed-label">Area</label>
+                        <select class="form-select form-select-sm profile-fixed-input" id="area" name="area">
+                            <option value="">Select Area</option>
+                            <option value="Angeles City">Angeles City</option>
+                            <option value="Manila">Manila</option>
+                            <option value="Quezon City">Quezon City</option>
+                            <option value="Makati">Makati</option>
+                            <option value="Taguig">Taguig</option>
+                            <option value="Pasig">Pasig</option>
+                            <option value="Mandaluyong">Mandaluyong</option>
+                            <option value="Pasay">Pasay</option>
+                            <option value="Parañaque">Parañaque</option>
+                            <option value="Las Piñas">Las Piñas</option>
+                            <option value="Muntinlupa">Muntinlupa</option>
+                            <option value="Marikina">Marikina</option>
+                            <option value="Caloocan">Caloocan</option>
+                            <option value="Malabon">Malabon</option>
+                            <option value="Navotas">Navotas</option>
+                            <option value="Valenzuela">Valenzuela</option>
+                            <option value="San Juan">San Juan</option>
+                            <option value="Antipolo">Antipolo</option>
+                            <option value="Bacoor">Bacoor</option>
+                            <option value="Dasmarinas">Dasmarinas</option>
+                            <option value="Imus">Imus</option>
+                            <option value="Santa Rosa">Santa Rosa</option>
+                            <option value="Calamba">Calamba</option>
+                            <option value="Binan">Binan</option>
+                            <option value="San Pedro">San Pedro</option>
+                            <option value="Cabuyao">Cabuyao</option>
+                            <option value="Taytay">Taytay</option>
+                            <option value="Cainta">Cainta</option>
+                            <option value="Angeles">Angeles</option>
+                            <option value="San Fernando (Pampanga)">San Fernando (Pampanga)</option>
+                            <option value="Baguio">Baguio</option>
+                            <option value="Cebu City">Cebu City</option>
+                            <option value="Mandaue">Mandaue</option>
+                            <option value="Iloilo City">Iloilo City</option>
+                            <option value="Bacolod">Bacolod</option>
+                            <option value="Davao City">Davao City</option>
+                            <option value="Cagayan de Oro">Cagayan de Oro</option>
+                            <option value="Zamboanga City">Zamboanga City</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 3: Address -->
+            <div class="row g-2 mb-4">
+                <div class="col-md-12">
+                    <div class="d-flex align-items-center">
+                        <label for="customer_address" class="form-label profile-fixed-label">Address</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="customer_address" name="customer_address"
+                            value="{{ request.GET.customer_address }}" placeholder="123 Building Name, Street Name, Barangay, City, Province, ZIP Code">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="row g-2">
+                <div class="col-md-12">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" id="clearBtnCustomer" class="btn btn-sm profile-clear-btn">Clear</button>
+                        <button type="submit" id="saveBtnCustomer" class="btn btn-sm profile-save-btn">Save</button>
+                        <button type="button" id="deleteBtnCustomer" class="btn btn-sm profile-delete-btn" style="display: none;">Delete</button>
+                        <button type="submit" formaction="{% url 'profiles' %}?tab=customer" class="btn btn-sm profile-search-btn">Search</button>
+                        <button type="button" id="reportBtnCustomer" class="btn btn-sm profile-report-btn">Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="mx-auto" style="width: 80%">
+        <h6 class="mb-3 text-start">Customer List</h6>
+    </div>
+    
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+            <table class="table mb-0" style="min-width: 800px;">
+                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                    <tr>
+                        <th width="100" class="text-center">Code</th>
+                        <th class="text-center">Name</th>
+                        <th class="text-center">Contact Person</th>
+                        <th width="150" class="text-center">Phone Number</th>
+                        <th width="120" class="text-center">Area</th>
+                        <th class="text-center">Address</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    {% for customer in customers %}
+                    <tr class="customer-row" data-id="{{ customer.id }}" 
+                        data-code="{{ customer.customer_code }}"
+                        data-name="{{ customer.company_name }}"
+                        data-contact="{{ customer.contact_person }}"
+                        data-phone="{{ customer.phone|default:'' }}"
+                        data-area="{{ customer.area|default:'' }}"
+                        data-address="{{ customer.customer_address|default:'' }}">
+                        <td class="text-center"><strong>{{ customer.customer_code }}</strong></td>
+                        <td>{{ customer.company_name }}</td>
+                        <td>{{ customer.contact_person|default:"-" }}</td>
+                        <td class="text-center">{{ customer.phone|default:"-" }}</td>
+                        <td class="text-center">{{ customer.area|default:"-" }}</td>
+                        <td>{{ customer.customer_address|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            {% if request.GET %}
+                                No customers found matching your search.
+                            {% else %}
+                                No customers found. Create your first customer above.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="mx-auto text-end" style="width: 80%">
+        <strong>Total Customers: {{ customers.count }}</strong>
+        {% if request.GET %}
+            <span class="text-muted"> - Filtered results</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- SUPPLIERS TAB CONTENT -->
+    {% if active_tab == 'supplier' %}
+    <div class="mx-auto" style="width: 80%">
+        <h5 class="mb-3 text-start">Suppliers</h5>
+    </div>
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <h5>aw aw</h5>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Check which tab is active on page load
+    function checkActiveTabAndInitialize() {
+        // Get current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        
+        // Initialize the appropriate tab based on URL parameter
+        if (activeTab === 'product') {
+            initializeProductTab();
+        } else if (activeTab === 'customer') {
+            initializeCustomerTab();
+        } else if (!activeTab) {
+            // If no tab parameter, check if we're on product or customer tab by looking at form elements
+            if (document.getElementById('productForm')) {
+                initializeProductTab();
+            } else if (document.getElementById('customerForm')) {
+                initializeCustomerTab();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the appropriate tab
+        checkActiveTabAndInitialize();
+    });
+    
+    // Product Tab JavaScript
+    function initializeProductTab() {
+        const productForm = document.getElementById('productForm');
+        if (!productForm) return; // Exit if product form doesn't exist
+        
+        const productIdInput = document.getElementById('product_id');
+        const isEditProductInput = document.getElementById('is_edit_product');
+        const originalProductCodeInput = document.getElementById('original_product_code');
+        const originalDescriptionInput = document.getElementById('original_description');
+        const saveBtnProduct = document.getElementById('saveBtnProduct');
+        const clearBtnProduct = document.getElementById('clearBtnProduct');
+        const deleteBtnProduct = document.getElementById('deleteBtnProduct');
+        const reportBtnProduct = document.getElementById('reportBtnProduct');
+        const productRows = document.querySelectorAll('.product-row');
+        const productCodeInput = document.getElementById('product_code');
+        const descriptionInput = document.getElementById('description');
+        const priceInput = document.getElementById('price');
+        const quantityInput = document.getElementById('quantity');
+        const unitSelect = document.getElementById('unit');
+        
+        // Store all existing product codes and descriptions from data attributes
+        const existingProductCodes = new Set();
+        const existingDescriptions = new Set();
+        
+        // Populate existing codes and descriptions from table rows
+        productRows.forEach(row => {
+            existingProductCodes.add(row.dataset.code);
+            existingDescriptions.add(row.dataset.description.toLowerCase());
+        });
+        
+        // Function to get next available product code
+        function getNextAvailableProductCode() {
+            let maxCode = 0;
+            existingProductCodes.forEach(code => {
+                // Extract numeric part from code (e.g., P001 -> 1)
+                const match = code.match(/\d+/);
+                if (match) {
+                    const num = parseInt(match[0]);
+                    if (num > maxCode) maxCode = num;
+                }
+            });
+            
+            // Format next code (e.g., P002)
+            const nextNum = maxCode + 1;
+            return 'P' + nextNum.toString().padStart(3, '0');
+        }
+        
+        // Double-click functionality for products
+        productRows.forEach(row => {
+            row.addEventListener('dblclick', function() {
+                console.log('Product row double-clicked:', this.dataset);
+                
+                // Populate form fields
+                productCodeInput.value = this.dataset.code;
+                descriptionInput.value = this.dataset.description;
+                priceInput.value = this.dataset.price;
+                quantityInput.value = this.dataset.quantity;
+                unitSelect.value = this.dataset.unit;
+                
+                // Store original values
+                originalProductCodeInput.value = this.dataset.code;
+                originalDescriptionInput.value = this.dataset.description;
+                
+                // Set hidden inputs
+                productIdInput.value = this.dataset.id;
+                isEditProductInput.value = 'true';
+                
+                // Change button text and show delete button
+                saveBtnProduct.textContent = 'Update';
+                deleteBtnProduct.style.display = 'inline-block';
+                
+                // Change form action for update
+                productForm.action = "{% url 'product_update' 0 %}".replace('0', this.dataset.id);
+                
+                console.log('Product form updated for editing:', {
+                    id: this.dataset.id,
+                    code: this.dataset.code,
+                    description: this.dataset.description,
+                    price: this.dataset.price,
+                    quantity: this.dataset.quantity,
+                    unit: this.dataset.unit
+                });
+            });
+        });
+        
+        // Check if product code is being changed during update
+        productCodeInput.addEventListener('input', function() {
+            if (isEditProductInput.value === 'true') {
+                const currentCode = this.value;
+                const originalCode = originalProductCodeInput.value;
+                
+                // If user changed the code, check if it exists
+                if (currentCode !== originalCode) {
+                    if (existingProductCodes.has(currentCode)) {
+                        // Code already exists, show warning and auto-correct
+                        alert('Product code already exists. Auto-correcting to next available code.');
+                        this.value = getNextAvailableProductCode();
+                        // Since code changed, this should be a new record
+                        saveBtnProduct.textContent = 'Save';
+                        deleteBtnProduct.style.display = 'none';
+                        isEditProductInput.value = 'false';
+                        productIdInput.value = '';
+                        productForm.action = "{% url 'product_create' %}";
+                    } else if (currentCode === '') {
+                        // If user clears the code, auto-fill with next available
+                        this.value = getNextAvailableProductCode();
+                    }
+                }
+            }
+        });
+        
+        // Check if description is being changed during update
+        descriptionInput.addEventListener('input', function() {
+            if (isEditProductInput.value === 'true') {
+                const currentDescription = this.value.toLowerCase();
+                const originalDescription = originalDescriptionInput.value.toLowerCase();
+                
+                // If user changed the description, check if it exists (and it's not their own original description)
+                if (currentDescription !== originalDescription && existingDescriptions.has(currentDescription) && currentDescription !== '') {
+                    alert('Product description already exists. Please use a different description.');
+                    this.focus();
+                }
+            }
+        });
+        
+        // Clear button functionality for products
+        clearBtnProduct.addEventListener('click', function() {
+            productForm.reset();
+            productIdInput.value = '';
+            isEditProductInput.value = 'false';
+            originalProductCodeInput.value = '';
+            originalDescriptionInput.value = '';
+            saveBtnProduct.textContent = 'Save';
+            deleteBtnProduct.style.display = 'none';
+            
+            // Reset form action to create
+            productForm.action = "{% url 'product_create' %}";
+            
+            // Reset the code field to next available code
+            productCodeInput.value = getNextAvailableProductCode();
+            
+            // Reset dropdown
+            unitSelect.selectedIndex = 0;
+            
+            console.log('Product form cleared');
+        });
+        
+        // Delete button functionality for products
+        deleteBtnProduct.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this product?')) {
+                // Create and submit delete form
+                const deleteForm = document.createElement('form');
+                deleteForm.method = 'POST';
+                deleteForm.action = "{% url 'product_delete' 0 %}".replace('0', productIdInput.value);
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                
+                const tabInput = document.createElement('input');
+                tabInput.type = 'hidden';
+                tabInput.name = 'tab';
+                tabInput.value = 'product';
+                
+                deleteForm.appendChild(csrfInput);
+                deleteForm.appendChild(tabInput);
+                document.body.appendChild(deleteForm);
+                deleteForm.submit();
+            }
+        });
+        
+        // Report button functionality (placeholder) for products
+        reportBtnProduct.addEventListener('click', function() {
+            alert('Product report functionality to be implemented');
+        });
+        
+        // Initialize with next available code if field is empty
+        if (!productCodeInput.value) {
+            productCodeInput.value = getNextAvailableProductCode();
+        }
+        
+        // Get price from URL parameters and set it
+        const urlParams = new URLSearchParams(window.location.search);
+        const priceParam = urlParams.get('price');
+        if (priceParam) {
+            priceInput.value = priceParam;
+        }
+        
+        // Get unit from URL parameters and set it
+        const unitParam = urlParams.get('unit');
+        if (unitParam) {
+            unitSelect.value = unitParam;
+        }
+        
+        // Debug: Log initial state
+        console.log('Product form initialized:', {
+            saveBtnText: saveBtnProduct.textContent,
+            deleteBtnDisplay: deleteBtnProduct.style.display,
+            existingProductCodes: Array.from(existingProductCodes),
+            existingDescriptions: Array.from(existingDescriptions)
+        });
+    }
+    
+    function initializeCustomerTab() {
+        const customerForm = document.getElementById('customerForm');
+        if (!customerForm) return; // Exit if customer form doesn't exist
+        
+        const customerIdInput = document.getElementById('customer_id');
+        const isEditCustomerInput = document.getElementById('is_edit_customer');
+        const originalCustomerCodeInput = document.getElementById('original_customer_code');
+        const originalCompanyNameInput = document.getElementById('original_company_name');
+        const saveBtnCustomer = document.getElementById('saveBtnCustomer');
+        const clearBtnCustomer = document.getElementById('clearBtnCustomer');
+        const deleteBtnCustomer = document.getElementById('deleteBtnCustomer');
+        const reportBtnCustomer = document.getElementById('reportBtnCustomer');
+        const customerRows = document.querySelectorAll('.customer-row');
+        const customerCodeInput = document.getElementById('customer_code');
+        const companyNameInput = document.getElementById('company_name');
+        const contactPersonInput = document.getElementById('contact_person');
+        const phoneInput = document.getElementById('phone');
+        const areaSelect = document.getElementById('area');
+        const addressInput = document.getElementById('customer_address');
+        
+        // Store all existing customer codes and names from data attributes
+        const existingCustomerCodes = new Set();
+        const existingCompanyNames = new Set();
+        
+        // Populate existing codes and names from table rows
+        customerRows.forEach(row => {
+            existingCustomerCodes.add(row.dataset.code);
+            existingCompanyNames.add(row.dataset.name.toLowerCase());
+        });
+        
+        // Function to get next available customer code
+        function getNextAvailableCustomerCode() {
+            let maxCode = 0;
+            existingCustomerCodes.forEach(code => {
+                // Extract numeric part from code (e.g., C001 -> 1)
+                const match = code.match(/\d+/);
+                if (match) {
+                    const num = parseInt(match[0]);
+                    if (num > maxCode) maxCode = num;
+                }
+            });
+            
+            // Format next code (e.g., C002)
+            const nextNum = maxCode + 1;
+            return 'C' + nextNum.toString().padStart(3, '0');
+        }
+        
+        // Double-click functionality for customers
+        customerRows.forEach(row => {
+            row.addEventListener('dblclick', function() {
+                console.log('Customer row double-clicked:', this.dataset);
+                
+                // Populate form fields
+                customerCodeInput.value = this.dataset.code;
+                companyNameInput.value = this.dataset.name;
+                contactPersonInput.value = this.dataset.contact;
+                phoneInput.value = this.dataset.phone;
+                areaSelect.value = this.dataset.area;
+                addressInput.value = this.dataset.address;
+                
+                // Store original values
+                originalCustomerCodeInput.value = this.dataset.code;
+                originalCompanyNameInput.value = this.dataset.name;
+                
+                // Set hidden inputs
+                customerIdInput.value = this.dataset.id;
+                isEditCustomerInput.value = 'true';
+                
+                // Change button text and show delete button
+                saveBtnCustomer.textContent = 'Update';
+                deleteBtnCustomer.style.display = 'inline-block';
+                
+                // Change form action for update
+                customerForm.action = "{% url 'customer_update' 0 %}".replace('0', this.dataset.id);
+                
+                console.log('Customer form updated for editing:', {
+                    id: this.dataset.id,
+                    code: this.dataset.code,
+                    name: this.dataset.name,
+                    area: this.dataset.area,
+                    address: this.dataset.address
+                });
+            });
+        });
+        
+        // Check if customer code is being changed during update
+        customerCodeInput.addEventListener('input', function() {
+            if (isEditCustomerInput.value === 'true') {
+                const currentCode = this.value;
+                const originalCode = originalCustomerCodeInput.value;
+                
+                // If user changed the code, check if it exists
+                if (currentCode !== originalCode) {
+                    if (existingCustomerCodes.has(currentCode)) {
+                        // Code already exists, show warning and auto-correct
+                        alert('Customer code already exists. Auto-correcting to next available code.');
+                        this.value = getNextAvailableCustomerCode();
+                        // Since code changed, this should be a new record
+                        saveBtnCustomer.textContent = 'Save';
+                        deleteBtnCustomer.style.display = 'none';
+                        isEditCustomerInput.value = 'false';
+                        customerIdInput.value = '';
+                        customerForm.action = "{% url 'customer_create' %}";
+                    } else if (currentCode === '') {
+                        // If user clears the code, auto-fill with next available
+                        this.value = getNextAvailableCustomerCode();
+                    }
+                }
+            }
+        });
+        
+        // Check if company name is being changed during update
+        companyNameInput.addEventListener('input', function() {
+            if (isEditCustomerInput.value === 'true') {
+                const currentName = this.value.toLowerCase();
+                const originalName = originalCompanyNameInput.value.toLowerCase();
+                
+                // If user changed the name, check if it exists (and it's not their own original name)
+                if (currentName !== originalName && existingCompanyNames.has(currentName) && currentName !== '') {
+                    alert('Customer name already exists. Please use a different name.');
+                    this.focus();
+                }
+            }
+        });
+        
+        // Clear button functionality for customers
+        clearBtnCustomer.addEventListener('click', function() {
+            customerForm.reset();
+            customerIdInput.value = '';
+            isEditCustomerInput.value = 'false';
+            originalCustomerCodeInput.value = '';
+            originalCompanyNameInput.value = '';
+            saveBtnCustomer.textContent = 'Save';
+            deleteBtnCustomer.style.display = 'none';
+            
+            // Reset form action to create
+            customerForm.action = "{% url 'customer_create' %}";
+            
+            // Reset the code field to next available code
+            customerCodeInput.value = getNextAvailableCustomerCode();
+            
+            // Reset dropdown
+            areaSelect.selectedIndex = 0;
+            
+            console.log('Customer form cleared');
+        });
+        
+        // Delete button functionality for customers
+        deleteBtnCustomer.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                // Create and submit delete form
+                const deleteForm = document.createElement('form');
+                deleteForm.method = 'POST';
+                deleteForm.action = "{% url 'customer_delete' 0 %}".replace('0', customerIdInput.value);
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                
+                const tabInput = document.createElement('input');
+                tabInput.type = 'hidden';
+                tabInput.name = 'tab';
+                tabInput.value = 'customer';
+                
+                deleteForm.appendChild(csrfInput);
+                deleteForm.appendChild(tabInput);
+                document.body.appendChild(deleteForm);
+                deleteForm.submit();
+            }
+        });
+        
+        // Report button functionality (placeholder) for customers
+        reportBtnCustomer.addEventListener('click', function() {
+            alert('Customer report functionality to be implemented');
+        });
+        
+        // Initialize with next available code if field is empty
+        if (!customerCodeInput.value) {
+            customerCodeInput.value = getNextAvailableCustomerCode();
+        }
+        
+        // Get area from URL parameters and set it
+        const urlParams = new URLSearchParams(window.location.search);
+        const areaParam = urlParams.get('area');
+        if (areaParam) {
+            areaSelect.value = areaParam;
+        }
+        
+        // Debug: Log initial state
+        console.log('Customer form initialized:', {
+            saveBtnText: saveBtnCustomer.textContent,
+            deleteBtnDisplay: deleteBtnCustomer.style.display,
+            existingCustomerCodes: Array.from(existingCustomerCodes),
+            existingCompanyNames: Array.from(existingCompanyNames)
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load static %}
+
+<html>
+    <head>
+        <title>MEW System</title>
+        <link rel="stylesheet" href="{% static '/bootstrap/css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static '/bootstrap/css/custom.css' %}">
+        <link rel="stylesheet" href="{% static '/css/style.css' %}">
+    </head>
+    <style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .container {
+        flex: 1;
+        padding-bottom: 50px; 
+    }
+
+    .footer {
+        width: 100%;
+        text-align: center;
+        margin-top: auto;
+        color: white;
+    }
+    </style>
+
+    <body>
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </body>
+</html>

@@ -1,0 +1,638 @@
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 300;
+    src: url(https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    src: url(https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    src: url(https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1pL7SUc.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    src: url(https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMawFL7SUc.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    src: url(https://fonts.gstatic.com/s/inter/v13/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2VL7SUc.woff2) format('woff2');
+}
+
+/* PAGE BACKGROUND COLOR */
+body {
+    background-color: #F9FAFC !important;
+    font-size: 0.85rem !important;
+}
+
+/* VERTICAL ALIGNMENT */
+.row.mb-2,
+.row.mb-3 {
+    align-items: center !important;
+}
+
+/* Placeholder text color */
+::placeholder {
+    color: #AFB5BF !important;
+    opacity: 1 !important;
+}
+
+::-webkit-input-placeholder {
+    color: #AFB5BF !important;
+}
+
+::-moz-placeholder {
+    color: #AFB5BF !important;
+    opacity: 1 !important;
+}
+
+:-ms-input-placeholder {
+    color: #AFB5BF !important;
+}
+
+:-moz-placeholder {
+    color: #AFB5BF !important;
+    opacity: 1 !important;
+}
+
+/* Date input placeholder styling */
+.date-input::placeholder {
+    color: #AFB5BF !important;
+}
+
+/* Select dropdown placeholder styling */
+select option[value=""] {
+    color: #AFB5BF !important;
+}
+
+select:invalid {
+    color: #AFB5BF !important;
+}
+
+select:valid {
+    color: #4B5563 !important;
+}
+
+/* Make all form control text smaller */
+.form-control,
+.form-select,
+.form-control-sm {
+    font-size: 0.8rem !important;
+}
+
+/* Specifically target table fields */
+.table-field {
+    font-size: 0.8rem !important;
+}
+
+/* Make placeholder text smaller too */
+.form-control::placeholder,
+.form-select::placeholder {
+    font-size: 0.8rem !important;
+}
+
+/* Ensure date inputs have small text */
+.date-input {
+    font-size: 0.8rem !important;
+}
+
+/* Make labels smaller to match */
+.form-label {
+    font-size: 0.85rem !important;
+}
+
+/* Make the text in select dropdowns smaller */
+.form-select option {
+    font-size: 0.8rem !important;
+    padding: 4px 8px !important;
+}
+
+/* HIDE THE PLACEHOLDER OPTION IN THE DROPDOWN LIST */
+select option[value=""] {
+    display: none !important;
+}
+
+/* Show placeholder text when no option is selected */
+select:required:invalid,
+select option[value=""][selected] {
+    color: #AFB5BF !important;
+}
+
+/* Normal color when something is selected */
+select:valid {
+    color: #4B5563 !important;
+}
+
+/* Nav tabs with Inter font */
+.nav-tabs .nav-link {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #4B5563 !important;
+    border: none !important;
+}
+
+.nav-tabs .nav-link.active {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    color: #4B5563 !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid #590404 !important;
+}
+
+/* Buttons with Inter font */
+.btn {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    border: 1.75px solid transparent !important;
+    border-radius: 6px !important;
+    padding: 0.375rem 1.5rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Custom Button Styles */
+.print-btn {
+    color: #D8BE2A !important;
+    background-color: #FFF8E2 !important;
+}
+
+.print-btn:hover {
+    background-color: #FFF2CC !important;
+}
+
+.clear-btn {
+    color: #1878CF !important;
+    background-color: #E5F3FE !important;
+}
+
+.clear-btn:hover {
+    background-color: #D4E9FC !important;
+}
+
+.save-btn {
+    color: #42BB6C !important;
+    background-color: #EDF8F0 !important;
+}
+
+.save-btn:hover {
+    background-color: #DFF2E5 !important;
+}
+
+.cancel-btn {
+    color: #DB6A5A !important;
+    background-color: #FFEBED !important;
+}
+
+.cancel-btn:hover {
+    background-color: #FFD9DC !important;
+}
+
+.reuse-btn {
+    color: #DF893D !important;
+    background-color: #FFE8D6 !important;
+}
+
+.reuse-btn:hover {
+    background-color: #FFDCC2 !important;
+}
+
+.back-btn {
+    color: #616161 !important;
+    background-color: #D3D3D3 !important;
+}
+
+.back-btn:hover {
+    background-color: #C7C7C7 !important;
+}
+
+/* Profile buttons - REMOVED SPECIFIC COLUMN STYLES, KEPT COLOR STYLES */
+.profile-clear-btn {
+    color: #1878CF !important;
+    background-color: #E5F3FE !important;
+}
+
+.profile-clear-btn:hover {
+    background-color: #D4E9FC !important;
+}
+
+.profile-save-btn {
+    color: #42BB6C !important;
+    background-color: #EDF8F0 !important;
+}
+
+.profile-save-btn:hover {
+    background-color: #DFF2E5 !important;
+}
+
+.profile-delete-btn {
+    color: #DB6A5A !important;
+    background-color: #FFEBED !important;
+}
+
+.profile-delete-btn:hover {
+    background-color: #FFD9DC !important;
+}
+
+.profile-search-btn {
+    color: #616161 !important;
+    background-color: #D3D3D3 !important;
+}
+
+.profile-search-btn:hover {
+    background-color: #C7C7C7 !important;
+}
+
+.profile-report-btn {
+    color: #616161 !important;
+    background-color: #D3D3D3 !important;
+}
+
+.profile-report-btn:hover {
+    background-color: #C7C7C7 !important;
+}
+
+/* ===== PROFILE FORM STYLES ===== */
+/* Profile form fixed label styles - make labels farther from fields */
+.profile-fixed-label {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #4B5563 !important;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
+    /* min-width: 70px !important; */
+    text-align: right !important;
+    padding-right: 0px !important;
+    flex-shrink: 0 !important;
+}
+
+.profile-fixed-input {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+/* Make sure the flex container works properly */
+.col-md-3 > .d-flex,
+.col-md-4 > .d-flex,
+.col-md-9 > .d-flex,
+.col-md-12 > .d-flex {
+    width: 100% !important;
+}
+
+/* Add some margin between rows */
+.card.mb-4.p-3.mx-auto .row.g-2.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Target specifically profile forms to increase spacing */
+.card.mb-4.p-3.mx-auto[style*="width: 80%"] .profile-fixed-label {
+    min-width: 145px !important; /* Even wider for more space */
+    padding-right: 25px !important; /* More padding */
+}
+
+.form-label,
+label,
+.form-control,
+.form-select,
+.form-check-label {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #4B5563 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Headers - Inter Bold */
+h1, h2, h3, h4, h5, h6,
+.card-header strong,
+.form-label strong {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    color: #4B5563 !important;
+}
+
+/* Table headers */
+h5.mb-3.text-start {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    color: #4B5563 !important;
+    font-size: 1.0rem !important;
+}
+
+/* Navbar with Inter font */
+.navbar-brand,
+.navbar-brand small {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    color: white !important;
+}
+
+/* Text in summary displays */
+#grand_total_display,
+#partial_payment_display,
+#amount_due_display {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+}
+
+#amount_due_display {
+    font-weight: 700 !important;
+}
+
+/* Card styling */
+.card {
+    border: 1.25px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #FEFEFE !important;
+    box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Style for form controls in cards */
+.card.mb-4.p-3.mx-auto input.form-control,
+.card.mb-4.p-3.mx-auto select.form-select,
+.card.mb-4.p-3.mx-auto textarea.form-control {
+    border: 1.75px solid #D0D5DD !important;
+    background-color: #F9FAFB !important;
+    border-radius: 8px !important;
+}
+
+/* Focus state for these specific inputs */
+.card.mb-4.p-3.mx-auto input.form-control:focus,
+.card.mb-4.p-3.mx-auto select.form-select:focus,
+.card.mb-4.p-3.mx-auto textarea.form-control:focus {
+    border-color: #4B5563 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 2px rgba(75, 85, 99, 0.1) !important;
+}
+
+/* Apply hover effect */
+.card.mb-4.p-3.mx-auto input.form-control:hover,
+.card.mb-4.p-3.mx-auto select.form-select:hover,
+.card.mb-4.p-3.mx-auto textarea.form-control:hover {
+    border-color: #9CA3AF !important;
+}
+
+.remove-row {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.75rem;
+    border: none;
+    background: none;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.remove-row:hover {
+    background-color: #fef2f2;
+}
+
+.form-check {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+.payment-options {
+    margin-bottom: 1rem;
+}
+
+.table-responsive {
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background-color: #FEFEFE !important;
+}
+
+/* Table header text color */
+#sales-items-table thead th,
+#sales-returns-table thead th,
+#sales-payments-table thead th {
+    border-bottom: 2px solid #dee2e6 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 8px 12px !important;
+    height: 40px;
+    font-weight: 600;
+    text-align: center;
+    color: #4B5563 !important;
+}
+
+#sales-items-table tbody td,
+#sales-returns-table tbody td,
+#sales-payments-table tbody td {
+    border-bottom: 1px solid #dee2e6 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 6px 12px !important;
+    height: 38px;
+}
+
+#sales-items-table,
+#sales-returns-table,
+#sales-payments-table {
+    border: none;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+#sales-items-table tbody tr:last-child td,
+#sales-returns-table tbody tr:last-child td,
+#sales-payments-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* Compact input fields inside tables */
+.table-field {
+    border: 0px solid transparent;
+    background: transparent;
+    width: 100%;
+    padding: 0.15rem 0.25rem !important;
+    font-size: 0.85rem;
+    height: 28px;
+}
+
+/* Keep table fields without the card border styling */
+#sales-items-table .table-field,
+#sales-returns-table .table-field,
+#sales-payments-table .table-field,
+#sales-items-table input.form-control,
+#sales-items-table select.form-select,
+#sales-returns-table input.form-control,
+#sales-returns-table select.form-select,
+#sales-payments-table input.form-control,
+#sales-payments-table select.form-select {
+    border: 0px solid transparent !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+
+/* Special styling for price and rate inputs to prevent formatting during typing */
+.sales-price.raw-input,
+.sales-rate.raw-input,
+.returns-price.raw-input,
+.returns-rate.raw-input,
+.payment-amount.raw-input {
+    border: 1px solid #ced4da !important;
+    background: white !important;
+}
+
+/* Placeholder color for table fields */
+#sales-items-table .table-field::placeholder,
+#sales-returns-table .table-field::placeholder,
+#sales-payments-table .table-field::placeholder {
+    color: #AFB5BF !important;
+}
+
+.d-flex.gap-3 {
+    gap: 1rem !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+/* Remove all rounded corners from tables */
+#sales-items-table thead th:first-child,
+#sales-items-table thead th:last-child,
+#sales-returns-table thead th:first-child,
+#sales-returns-table thead th:last-child,
+#sales-payments-table thead th:first-child,
+#sales-payments-table thead th:last-child,
+#sales-items-table tbody tr:last-child td:first-child,
+#sales-items-table tbody tr:last-child td:last-child,
+#sales-returns-table tbody tr:last-child td:first-child,
+#sales-returns-table tbody tr:last-child td:last-child,
+#sales-payments-table tbody tr:last-child td:first-child,
+#sales-payments-table tbody tr:last-child td:last-child {
+    border-radius: 0 !important;
+}
+
+/* Ensure sticky header works properly */
+.table-light.sticky-top {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+}
+
+/* Remove ALL focus outlines from table inputs */
+.table-field:focus,
+.table-field:focus-visible,
+.table-field:focus-within,
+#sales-items-table .table-field:focus,
+#sales-returns-table .table-field:focus,
+#sales-payments-table .table-field:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+.form-control:focus {
+    box-shadow: none !important;
+    border-color: none !important;
+    outline: none !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+}
+
+/* Target specific table inputs */
+#sales-items-table .form-control:focus,
+#sales-returns-table .form-control:focus,
+#sales-payments-table .form-control:focus,
+#sales-items-table .form-select:focus,
+#sales-returns-table .form-select:focus,
+#sales-payments-table .form-select:focus {
+    border-color: #ced4da !important;
+}
+
+/* Style for locked fields */
+input[readonly], select[disabled] {
+    background-color: #ffffff !important;
+    cursor: not-allowed;
+}
+
+/* Placeholder for readonly fields */
+input[readonly]::placeholder {
+    color: #D1D5DB !important;
+}
+
+/* Invoice Summary styling */
+#amount_due_display {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    transition: color 0.3s ease;
+}
+
+/* Align text properly */
+.text-end span {
+    display: inline-block;
+    min-width: 100px;
+}
+
+/* Make the totals stand out */
+#grand_total_display {
+    font-size: 1.1rem;
+}
+
+/* Notes textarea */
+#notes {
+    resize: vertical;
+    min-height: 60px;
+    border: 1px solid #dee2e6;
+}
+
+.form-check-input {
+    margin-right: 0.5rem;
+}
+
+/* Canceled banner */
+#canceled-banner {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 900 !important;
+    font-size: 2rem !important;
+    letter-spacing: 3px !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: 3px solid #b02a37 !important;
+    text-transform: uppercase !important;
+    padding: 1rem !important;
+}
+
+/* Canceled state */
+.canceled-state input,
+.canceled-state select,
+.canceled-state textarea,
+.canceled-state .table-field,
+.canceled-state .remove-row {
+    pointer-events: none !important;
+    opacity: 0.6 !important;
+    background-color: #f8f9fa !important;
+}
+
+/* Action buttons inside card */
+.mt-4.pt-3.border-top {
+    margin-top: 2rem !important;
+    padding-top: 1.5rem !important;
+}

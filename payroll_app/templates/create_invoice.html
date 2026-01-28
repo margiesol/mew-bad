@@ -1,0 +1,2031 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<nav class="navbar navbar-dark mb-3" style="background-color: #590404;">
+    <div class="d-flex align-items-center px-3" style="gap: 20px;">
+        <span class="navbar-brand">AstovC</span>
+        <a class="navbar-brand" href="{% url 'main_page' %}"><small>Invoice List</small></a>
+        <a class="navbar-brand" href="{% url 'create_invoice' %}"><small>Create Invoice</small></a>
+        <a class="navbar-brand" href="{% url 'profiles' %}"><small>Profiles</small></a>
+    </div>
+    <a class="navbar-brand" href="?logout=true"><small>Logout</small></a>     
+</nav>
+
+<div class="container" style="max-width: 1400px;">
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'sales' %}active{% endif %}" href="?tab=sales">
+               Sales Invoice
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'purchasing' %}active{% endif %}" href="?tab=purchasing">
+               Purchasing Invoice
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Sales Invoice Tab -->
+        <div class="tab-pane {% if active_tab == 'sales' %}show active{% endif %}" id="sales-invoice">
+            <!-- Canceled Invoice Banner -->
+            <div id="canceled-banner" class="alert alert-danger text-center mb-3 mx-auto" style="width: 80%; display: none;">
+                <h4 class="mb-0"><strong>CANCELED</strong></h4>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" action="{% if is_update %}{% url 'sales_invoice_update' invoice_id %}{% else %}{% url 'sales_invoice_create' %}{% endif %}" id="sales-invoice-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="tab" value="sales">
+                    <input type="hidden" id="sales_payment_status" name="payment_status" value="paid">
+                    <input type="hidden" id="invoice_status" name="invoice_status" value="active">
+                    
+                    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+                        <div class="row g-2" style="width: 100%; margin: 0 auto;">
+                            <!-- Left Column (45%) -->
+                            <div style="width: 45%;">
+                                <!-- Invoice No. - 2 columns -->
+                                <div class="row mb-2">
+                                    <div class="col-3 text-end pe-1">
+                                        <label for="sales_invoice_number" class="form-label">Invoice No.</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input type="text" class="form-control form-control-sm w-100" id="sales_invoice_number" name="invoice_number" 
+                                            value="{{ invoice_data.invoice_number|default:next_sales_invoice_number }}" required>
+                                    </div>
+                                </div>
+
+                                <!-- Date and Plate No. - 4 columns -->
+                                <div class="row mb-2">
+                                    <!-- Date Label -->
+                                    <div class="col-3 text-end pe-1">
+                                        <label for="sales_invoice_date" class="form-label">Date</label>
+                                    </div>
+                                    <!-- Date Field -->
+                                    <div class="col-4">
+                                        <input type="text" class="form-control form-control-sm w-100 date-input" 
+                                               id="sales_invoice_date" name="invoice_date" 
+                                               placeholder="mm/dd/yy" autocomplete="off">
+                                    </div>
+                                    <!-- Plate No. Label -->
+                                    <div class="col-2 text-end pe-1">
+                                        <label for="plateNo" class="form-label">Plate No.</label>
+                                    </div>
+                                    <!-- Plate No. Field -->
+                                    <div class="col-3">
+                                        <input type="text" class="form-control form-control-sm w-100" id="plateNo" name="plate_no">
+                                    </div>
+                                </div>
+
+                                <!-- Sales Agent - 2 columns -->
+                                <div class="row mb-2">
+                                    <div class="col-3 text-end pe-1">
+                                        <label for="salesAgent" class="form-label">Sales Agent</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <select class="form-select form-select-sm w-100" id="salesAgent" name="sales_agent" required>
+                                            <option value="" selected>Select...</option>
+                                            {% for agent in agents %}
+                                            <option value="{{ agent.agent_id }}">{{ agent.agent_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column (55%) -->
+                            <div style="width: 55%;">
+                                <!-- Customer Name - 2 columns -->
+                                <div class="row mb-2">
+                                    <div class="col-3 text-end pe-1">
+                                        <label for="customerDropdown" class="form-label">Customer</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <select class="form-select form-select-sm w-100" id="customerDropdown" name="customer_code" required>
+                                            <option value="" selected>Select...</option>
+                                            {% for customer in customers %}
+                                            <option value="{{ customer.customer_code }}" 
+                                                    data-address="{{ customer.customer_address }}"
+                                                    data-name="{{ customer.company_name }}">
+                                                {{ customer.customer_code }} - {{ customer.company_name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Address - 2 columns -->
+                                <div class="row mb-2">
+                                    <div class="col-3 text-end pe-1">
+                                        <label for="customerAddress" class="form-label">Address</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input type="text" class="form-control form-control-sm w-100" id="customerAddress" name="customer_address" readonly>
+                                    </div>
+                                </div>
+
+                                <!-- Status Row - full width -->
+                                <div class="row">
+                                    <div class="col-4 text-center" style="margin-top: 5px;">
+                                        <span class="form-label">Unpaid Invoices:</span>
+                                        <span id="unpaidInvoices" class="ms-1">0</span>
+                                    </div>
+                                    <div class="col-4 text-center" style="margin-top: 5px;">
+                                        <span class="form-label">Post-dated Cheques:</span>
+                                        <span id="postDatedCheques" class="ms-1">0</span>
+                                    </div>
+                                    <div class="col-4 text-center" style="margin-top: 5px;">
+                                        <span class="form-label">Bounced Cheques:</span>
+                                        <span id="bouncedCheques" class="ms-1">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mx-auto" style="width: 80%">
+                        <h5 class="mb-3 text-start">Invoice Items</h5>
+                    </div>
+                    
+                    <div class="card mb-4 p-3 mx-auto" style="width: 80%">                        
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table class="table mb-0" id="sales-items-table">
+                                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                                    <tr>
+                                        <th width="100" class="text-center">Code</th>
+                                        <th class="text-center">Description</th>
+                                        <th width="100" class="text-center">Quantity</th>
+                                        <th width="100" class="text-center">Unit</th>
+                                        <th width="120" class="text-center">Price</th>
+                                        <th width="100" class="text-center">Rate</th>
+                                        <th width="120" class="text-center">Amount</th>
+                                        <th width="30" class="text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-items-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mx-auto" style="width: 80%">
+                        <h5 class="mb-3 text-start">Returns</h5>
+                    </div>
+                    
+                    <div class="card mb-4 p-3 mx-auto" style="width: 80%">                        
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table class="table mb-0" id="sales-returns-table">
+                                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                                    <tr>
+                                        <th width="100" class="text-center">Code</th>
+                                        <th class="text-center">Description</th>
+                                        <th width="100" class="text-center">Quantity</th>
+                                        <th width="100" class="text-center">Unit</th>
+                                        <th width="120" class="text-center">Price</th>
+                                        <th width="100" class="text-center">Rate</th>
+                                        <th width="120" class="text-center">Amount</th>
+                                        <th width="30" class="text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-returns-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Payments Section -->
+                    <div class="mx-auto" style="width: 80%">
+                        <h5 class="mb-3 text-start">Payments</h5>
+                    </div>
+
+                    <div class="card mb-4 p-3 mx-auto" style="width: 80%">                        
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table mb-0" id="sales-payments-table">
+                                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                                    <tr>
+                                        <th width="100" class="text-center">Type</th>
+                                        <th width="120" class="text-center">Bank</th>
+                                        <th width="140" class="text-center">Cheque No.</th>
+                                        <th width="120" class="text-center">Amount</th>
+                                        <th width="120" class="text-center">Date</th>
+                                        <th width="80" class="text-center">Days</th>
+                                        <th width="100" class="text-center">Status</th>
+                                        <th width="30" class="text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-payments-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Summary Section -->
+                    <div class="mx-auto" style="width: 80%">
+                        <h5 class="mb-3 text-start">Invoice Summary</h5>
+                    </div>
+
+                    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+                        <div class="row g-2" style="width: 100%; margin: 0 auto;">
+                            <!-- Left Column (60%) -->
+                            <div style="width: 60%;">
+                                <!-- Row 1: Received and Terms -->
+                                <div class="row mb-2">
+                                    <!-- Received Label -->
+                                    <div class="col-2 text-end pe-1">
+                                        <label for="receivedCheckbox" class="form-label">Received</label>
+                                    </div>
+                                    <!-- Received Checkbox -->
+                                    <div class="col-1">
+                                        <input class="form-check-input" type="checkbox" id="receivedCheckbox" name="received">
+                                    </div>
+                                    <!-- Terms Label -->
+                                    <div class="col-2 text-end pe-1">
+                                        <label for="terms" class="form-label">Terms</label>
+                                    </div>
+                                    <!-- Terms Field -->
+                                    <div class="col-5">
+                                        <select class="form-select form-select-sm w-100" id="terms" name="terms">
+                                            <option value="">Select Terms</option>
+                                            <option value="30">30 Days</option>
+                                            <option value="60">60 Days</option>
+                                            <option value="90">90 Days</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Notes -->
+                                <div class="row mb-2">
+                                    <div class="col-2 text-end pe-1">
+                                        <label for="notes" class="form-label">Notes</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <textarea class="form-control form-control-sm w-100" id="notes" name="notes" rows="2"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3: Discount -->
+                                <div class="row">
+                                    <div class="col-2 text-end pe-1">
+                                        <label for="discount_summary" class="form-label">Discount</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="number" class="form-control form-control-sm w-100 text-end" 
+                                            id="discount_summary" name="discount_summary" 
+                                            step="0.01" min="0" placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column (40%) - Totals -->
+                            <div style="width: 40%;" class="border-start ps-4">
+                                <div class="row mb-3">
+                                    <div class="col-7 text-end pe-2">
+                                        <span class="form-label"><strong>Grand Total</strong></span>
+                                    </div>
+                                    <div class="col-5">
+                                        <span id="grand_total_display" class="fw-bold">0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-7 text-end pe-2">
+                                        <span class="form-label"><strong>Partial Payment</strong></span>
+                                    </div>
+                                    <div class="col-5">
+                                        <span id="partial_payment_display" class="fw-medium">0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-2">
+                                
+                                <div class="row">
+                                    <div class="col-7 text-end pe-2">
+                                        <span class="form-label" style="font-size: 1.1rem;">
+                                            <strong>Amount Due</strong>
+                                        </span>
+                                    </div>
+                                    <div class="col-5">
+                                        <span id="amount_due_display" class="fw-bold" style="font-size: 1.3rem;">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-center gap-3">
+                                <!-- Your buttons here -->
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Purchasing Invoice Tab -->
+        <div class="tab-pane {% if active_tab == 'purchasing' %}show active{% endif %}" id="purchasing-invoice">
+            <h5>aw aw</h5>
+        </div>
+    </div>
+</div>
+
+<div id="product-data" style="display: none;">
+    {% for product in products %}
+    <div class="product" data-code="{{ product.product_code }}" 
+         data-desc="{{ product.description }}" 
+         data-price="{{ product.price }}" 
+         data-unit="{{ product.unit }}">
+    </div>
+    {% endfor %}
+</div>
+
+<datalist id="productCodeList">
+    {% for product in products %}
+    <option value="{{ product.product_code }}">{{ product.description }}</option>
+    {% endfor %}
+</datalist>
+
+<datalist id="productDescList">
+    {% for product in products %}
+    <option value="{{ product.description }}">{{ product.product_code }}</option>
+    {% endfor %}
+</datalist>
+
+<datalist id="returnsProductList"></datalist>
+
+<script>
+// Helper function to format number with commas and 2 decimals
+function formatNumberWithCommas(num) {
+    if (num === '' || num === null || typeof num === 'undefined') return '0.00';
+    
+    // Convert to number
+    const number = parseFloat(num);
+    if (isNaN(number)) return '0.00';
+    
+    // Format with commas and 2 decimal places
+    return number.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// Helper function to parse formatted number back to number
+function parseFormattedNumber(str) {
+    if (!str) return 0;
+    // Remove commas and convert to number
+    return parseFloat(str.replace(/,/g, ''));
+}
+
+// Improved date parsing function for month/day/year format
+function parseDate(input) {
+    if (!input || input.trim() === '') return '';
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    let date;
+    input = input.trim();
+    
+    // Remove any non-numeric characters except / and -
+    input = input.replace(/[^\d/\-]/g, '');
+    
+    // Try different formats
+    if (input.includes('/')) {
+        // Handle mm/dd/yy or mm/dd
+        const parts = input.split('/');
+        if (parts.length >= 2) {
+            let month = parseInt(parts[0]);
+            let day = parseInt(parts[1]);
+            let year = parts.length === 3 ? parseInt(parts[2]) : currentYear;
+            
+            // Validate month (1-12)
+            if (month < 1 || month > 12) {
+                month = today.getMonth() + 1;
+            }
+            
+            // Validate day
+            const daysInMonth = new Date(year, month, 0).getDate();
+            if (day < 1 || day > daysInMonth) {
+                day = today.getDate();
+            }
+            
+            // Handle 2-digit year
+            if (year < 100) {
+                // If year is 99 or less, assume 1900s, otherwise 2000s
+                // But never go beyond current year + 10
+                const baseYear = year <= 99 ? 1900 : 2000;
+                year = baseYear + year;
+                
+                // If the resulting year is more than 10 years in the future, subtract 100
+                if (year > currentYear + 10) {
+                    year -= 100;
+                }
+            }
+            
+            // Never go beyond current year + 10
+            if (year > currentYear + 10) {
+                year = currentYear;
+            }
+            
+            date = new Date(year, month - 1, day);
+        }
+    } else if (input.includes('-')) {
+        // Handle Jan-2-26 or Jan-02 or Jan-02-2026
+        const parts = input.split('-');
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        
+        if (parts.length >= 2) {
+            let month, day, year;
+            
+            // Check if first part is month name
+            const monthStr = parts[0].toLowerCase().substring(0, 3);
+            const monthIndex = monthNames.indexOf(monthStr);
+            
+            if (monthIndex !== -1) {
+                // Month name format
+                month = monthIndex + 1;
+                day = parseInt(parts[1]);
+                year = parts.length === 3 ? parseInt(parts[2]) : currentYear;
+            } else {
+                // Try numeric month-day format
+                month = parseInt(parts[0]);
+                day = parseInt(parts[1]);
+                year = parts.length === 3 ? parseInt(parts[2]) : currentYear;
+                
+                // Validate month
+                if (month < 1 || month > 12) {
+                    month = today.getMonth() + 1;
+                }
+            }
+            
+            // Validate day
+            const daysInMonth = new Date(year, month, 0).getDate();
+            if (day < 1 || day > daysInMonth) {
+                day = today.getDate();
+            }
+            
+            // Handle 2-digit year
+            if (year < 100) {
+                const baseYear = year <= 99 ? 1900 : 2000;
+                year = baseYear + year;
+                
+                if (year > currentYear + 10) {
+                    year -= 100;
+                }
+            }
+            
+            // Never go beyond current year + 10
+            if (year > currentYear + 10) {
+                year = currentYear;
+            }
+            
+            date = new Date(year, month - 1, day);
+        }
+    } else if (input.length === 6 || input.length === 8) {
+        // Handle 010224 (mmddyy) or 01022024 (mmddyyyy)
+        let month, day, year;
+        
+        if (input.length === 6) {
+            month = parseInt(input.substring(0, 2));
+            day = parseInt(input.substring(2, 4));
+            year = parseInt(input.substring(4, 6));
+            year = year <= 99 ? 2000 + year : year;
+        } else {
+            month = parseInt(input.substring(0, 2));
+            day = parseInt(input.substring(2, 4));
+            year = parseInt(input.substring(4, 8));
+        }
+        
+        // Validate month
+        if (month < 1 || month > 12) {
+            month = today.getMonth() + 1;
+        }
+        
+        // Validate day
+        const daysInMonth = new Date(year, month, 0).getDate();
+        if (day < 1 || day > daysInMonth) {
+            day = today.getDate();
+        }
+        
+        // Never go beyond current year + 10
+        if (year > currentYear + 10) {
+            year = currentYear;
+        }
+        
+        date = new Date(year, month - 1, day);
+    }
+    
+    // Format to mm/dd/yyyy if valid date
+    if (date && !isNaN(date.getTime())) {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+    }
+    
+    return input; // Return original if can't parse
+}
+
+// Product data loading
+function loadProducts() {
+    const products = {};
+    const productElements = document.querySelectorAll('#product-data .product');
+    
+    productElements.forEach(element => {
+        const code = element.getAttribute('data-code');
+        products[code] = {
+            description: element.getAttribute('data-desc'),
+            price: parseFloat(element.getAttribute('data-price')),
+            unit: element.getAttribute('data-unit')
+        };
+    });
+    
+    return products;
+}
+
+const products = loadProducts();
+let salesRowCount = 0;
+let returnsRowCount = 0;
+let paymentsRowCount = 0;
+let invoiceProducts = {};
+let invoiceDate = new Date();
+let isCanceled = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const customerDropdown = document.getElementById('customerDropdown');
+    const addressField = document.getElementById('customerAddress');
+    const dateInput = document.getElementById('sales_invoice_date');
+    
+    // Date input formatting
+    if (dateInput) {
+        dateInput.addEventListener('blur', function() {
+            const formatted = parseDate(this.value);
+            if (formatted) {
+                this.value = formatted;
+                invoiceDate = new Date(formatted);
+                updateAllPaymentDays();
+            }
+        });
+        
+        dateInput.addEventListener('focus', function() {
+            this.style.color = '#4B5563';
+        });
+        
+        dateInput.addEventListener('blur', function() {
+            if (!this.value) {
+                this.style.color = '#AFB5BF';
+            }
+        });
+    }
+    
+    if (customerDropdown) {
+        customerDropdown.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption) {
+                addressField.value = selectedOption.getAttribute('data-address') || '';
+            }
+        });
+    }
+
+    // Initialize all components
+    initializeSalesTable();
+    initializeReturnsTable();
+    initializePaymentsTable();
+    
+    // Initialize invoice summary
+    initializeInvoiceSummary();
+    
+    // Set initial invoice date
+    if (dateInput && dateInput.value) {
+        const formatted = parseDate(dateInput.value);
+        if (formatted) {
+            dateInput.value = formatted;
+            invoiceDate = new Date(formatted);
+        }
+    }
+
+    // Update returns product list when invoice items change
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('sales-product-code') || 
+            e.target.classList.contains('sales-quantity')) {
+            updateReturnsProductList();
+        }
+    });
+
+    // Global event listeners for dynamic updates
+    document.addEventListener('input', function(e) {
+        if (isCanceled) return; // Don't update if canceled
+        
+        // When any sales item changes
+        if (e.target.classList.contains('sales-product-code') || 
+            e.target.classList.contains('sales-quantity') ||
+            e.target.classList.contains('sales-price') ||
+            e.target.classList.contains('sales-rate')) {
+            updateReturnsProductList(); // Update returns dropdown
+            updateSalesTotals(); // Update totals
+        }
+        
+        // When any returns item changes
+        if (e.target.classList.contains('returns-product-code') || 
+            e.target.classList.contains('returns-quantity') ||
+            e.target.classList.contains('returns-rate')) {
+            updateSalesTotals(); // Update totals
+        }
+        
+        // When discount changes
+        if (e.target.id === 'discount_summary') {
+            updateSalesTotals(); // Update totals
+        }
+        
+        // When payment amount changes
+        if (e.target.classList.contains('payment-amount')) {
+            updateInvoiceSummary();
+        }
+    });
+    
+    // Also listen for change events
+    document.addEventListener('change', function(e) {
+        if (isCanceled) return; // Don't update if canceled
+        
+        if (e.target.classList.contains('payment-status') ||
+            e.target.classList.contains('payment-type')) {
+            updateInvoiceSummary();
+        }
+    });
+});
+
+// Update all payment days when invoice date changes
+function updateAllPaymentDays() {
+    document.querySelectorAll('#sales-payments-tbody tr').forEach(row => {
+        updatePaymentDays(row);
+    });
+}
+
+// Sales Invoice Functions
+function initializeSalesTable() {
+    const tbody = document.getElementById('sales-items-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    salesRowCount = 0;
+    addSalesRow();
+}
+
+function addSalesRow() {
+    const tbody = document.getElementById('sales-items-tbody');
+    if (!tbody) return;
+    
+    const row = document.createElement('tr');
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control table-field sales-product-code" name="items[${salesRowCount}][code]" 
+                list="productCodeList" placeholder="Select..." data-row="${salesRowCount}" autocomplete="off">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field sales-product-desc" name="items[${salesRowCount}][desc]" 
+                list="productDescList" placeholder="Select..." data-row="${salesRowCount}">
+        </td>
+        <td>
+            <input type="number" class="form-control table-field sales-quantity" name="items[${salesRowCount}][quantity]" 
+                value="1" min="1" data-row="${salesRowCount}" style="text-align: center;">
+        </td>
+        <td>
+            <select class="form-control table-field sales-unit" name="items[${salesRowCount}][unit]" data-row="${salesRowCount}" style="text-align: center;">
+                <option value="PC" selected>PC</option>
+                <option value="PCS">PCS</option>
+                <option value="BOX">BOX</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" class="form-control table-field sales-price raw-input" name="items[${salesRowCount}][price]" 
+                placeholder="0.00" data-row="${salesRowCount}" style="text-align: right;">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field sales-rate raw-input" name="items[${salesRowCount}][rate]" 
+                   value="1.00" data-row="${salesRowCount}" style="text-align: center;">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field sales-amount" name="items[${salesRowCount}][amount]" 
+                   placeholder="0.00" data-row="${salesRowCount}" readonly style="text-align: right;">
+        </td>
+        <td>
+            <button type="button" class="remove-row" title="Remove row" onclick="deleteSalesRow(this)">✕</button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    
+    addSalesRowEventListeners(row, salesRowCount);
+    salesRowCount++;
+}
+
+// Returns functionality
+function initializeReturnsTable() {
+    const tbody = document.getElementById('sales-returns-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    returnsRowCount = 0;
+    addReturnsRow();
+}
+
+function addReturnsRow() {
+    const tbody = document.getElementById('sales-returns-tbody');
+    if (!tbody) return;
+    
+    const row = document.createElement('tr');
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control table-field returns-product-code" 
+                name="returns[${returnsRowCount}][code]" list="returnsProductList" placeholder="Select..." data-row="${returnsRowCount}" autocomplete="off">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field returns-product-desc" 
+                name="returns[${returnsRowCount}][desc]" placeholder="Select..." data-row="${returnsRowCount}">
+        </td>
+        <td>
+            <input type="number" class="form-control table-field returns-quantity" 
+                name="returns[${returnsRowCount}][quantity]" value="1" min="1" max="1" data-row="${returnsRowCount}" style="text-align: center;">
+        </td>
+        <td>
+            <select class="form-control table-field returns-unit" name="returns[${returnsRowCount}][unit]" data-row="${returnsRowCount}" style="text-align: center;">
+                <option value="PC" selected>PC</option>
+                <option value="PCS">PCS</option>
+                <option value="BOX">BOX</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" class="form-control table-field returns-price raw-input" 
+                name="returns[${returnsRowCount}][price]" placeholder="0.00" data-row="${returnsRowCount}" style="text-align: right;">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field returns-rate raw-input" 
+                name="returns[${returnsRowCount}][rate]" value="1.00" data-row="${returnsRowCount}" style="text-align: center;">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field returns-amount" 
+                name="returns[${returnsRowCount}][amount]" placeholder="0.00" data-row="${returnsRowCount}" style="text-align: right;" readonly>
+        </td>
+        <td>
+            <button type="button" class="remove-row" title="Remove row" onclick="deleteReturnsRow(this)">✕</button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    
+    addReturnsRowEventListeners(row, returnsRowCount);
+    returnsRowCount++;
+}
+
+function updateReturnsProductList() {
+    // Get all products from invoice items
+    invoiceProducts = {};
+    const datalist = document.getElementById('returnsProductList');
+    if (!datalist) return;
+    
+    datalist.innerHTML = '';
+    
+    document.querySelectorAll('#sales-items-tbody tr').forEach(row => {
+        const code = row.querySelector('.sales-product-code').value;
+        const desc = row.querySelector('.sales-product-desc').value;
+        const price = row.querySelector('.sales-price').value;
+        const unit = row.querySelector('.sales-unit').value;
+        const quantity = row.querySelector('.sales-quantity').value;
+        
+        if (code && desc) {
+            invoiceProducts[code] = {
+                description: desc,
+                price: parseFormattedNumber(price) || 0,
+                unit: unit,
+                maxQuantity: parseInt(quantity) || 0
+            };
+            
+            // Add to datalist
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = `${code} - ${desc}`;
+            datalist.appendChild(option);
+        }
+    });
+    
+    // Update existing returns rows max quantity
+    document.querySelectorAll('.returns-product-code').forEach(input => {
+        const rowIndex = input.getAttribute('data-row');
+        const row = document.querySelectorAll('#sales-returns-tbody tr')[rowIndex];
+        if (row) {
+            const code = input.value;
+            const quantityInput = row.querySelector('.returns-quantity');
+            if (invoiceProducts[code]) {
+                quantityInput.max = invoiceProducts[code].maxQuantity;
+                quantityInput.title = `Max: ${invoiceProducts[code].maxQuantity}`;
+            } else {
+                quantityInput.max = 0;
+                quantityInput.title = 'Item not in invoice';
+            }
+        }
+    });
+}
+
+function addReturnsRowEventListeners(row, rowIndex) {
+    const codeInput = row.querySelector('.returns-product-code');
+    const descInput = row.querySelector('.returns-product-desc');
+    const quantityInput = row.querySelector('.returns-quantity');
+    const unitSelect = row.querySelector('.returns-unit');
+    const priceInput = row.querySelector('.returns-price');
+    const rateInput = row.querySelector('.returns-rate');
+    const amountInput = row.querySelector('.returns-amount');
+    
+    // Remove blue outline
+    codeInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+    });
+    
+    descInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+    });
+    
+    // Price input - format on blur only
+    priceInput.addEventListener('focus', function() {
+        // Remove formatting while editing
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = rawValue;
+        }
+        this.classList.add('raw-input');
+    });
+    
+    priceInput.addEventListener('blur', function() {
+        // Format only on blur
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = formatNumberWithCommas(rawValue);
+        }
+        this.classList.remove('raw-input');
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Rate input - format on blur only
+    rateInput.addEventListener('focus', function() {
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = rawValue;
+        }
+        this.classList.add('raw-input');
+    });
+    
+    rateInput.addEventListener('blur', function() {
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = formatNumberWithCommas(rawValue);
+        }
+        this.classList.remove('raw-input');
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Product code change
+    codeInput.addEventListener('input', function() {
+        const code = this.value.trim();
+        
+        // If code is cleared, also clear description and price
+        if (!code) {
+            descInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        if (invoiceProducts[code]) {
+            descInput.value = invoiceProducts[code].description;
+            priceInput.value = formatNumberWithCommas(invoiceProducts[code].price);
+            
+            quantityInput.max = invoiceProducts[code].maxQuantity;
+            quantityInput.title = `Max: ${invoiceProducts[code].maxQuantity}`;
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+        } else {
+            descInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            updateSalesTotals();
+        }
+    });
+    
+    // Product description change - clear code if description is cleared
+    descInput.addEventListener('input', function() {
+        const desc = this.value.trim();
+        
+        // If description is cleared, also clear code and price
+        if (!desc) {
+            codeInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        // Search for product by description in invoice products
+        let found = false;
+        for (const [code, product] of Object.entries(invoiceProducts)) {
+            if (product.description.toLowerCase().includes(desc.toLowerCase())) {
+                codeInput.value = code;
+                priceInput.value = formatNumberWithCommas(product.price);
+                quantityInput.max = product.maxQuantity;
+                quantityInput.title = `Max: ${product.maxQuantity}`;
+                calculateReturnsRowAmount(rowIndex);
+                updateSalesTotals();
+                found = true;
+                break;
+            }
+        }
+        
+        // If no match found, clear code and price
+        if (!found) {
+            codeInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+        }
+    });
+    
+    // Quantity change - auto-update unit between PC and PCS
+    quantityInput.addEventListener('input', function() {
+        const max = parseInt(this.max) || 0;
+        const value = parseInt(this.value) || 0;
+        
+        // Check quantity limit
+        if (value > max) {
+            this.value = max;
+        }
+        
+        // Auto-change unit from PC to PCS if quantity > 1
+        if (value > 1 && unitSelect.value === 'PC') {
+            unitSelect.value = 'PCS';
+        } else if (value === 1 && unitSelect.value === 'PCS') {
+            unitSelect.value = 'PC';
+        }
+        
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Tab navigation - need to include select elements too
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                if (index === inputs.length - 2) {
+                    addReturnsRow();
+                    const newRows = document.querySelectorAll('#sales-returns-tbody tr');
+                    const lastRow = newRows[newRows.length - 1];
+                    lastRow.querySelector('.returns-product-code').focus();
+                } else {
+                    inputs[index + 1].focus();
+                }
+            }
+        });
+    });
+}
+
+function calculateReturnsRowAmount(rowIndex) {
+    const row = document.querySelectorAll('#sales-returns-tbody tr')[rowIndex];
+    if (!row) return;
+    
+    const quantity = parseFloat(row.querySelector('.returns-quantity').value) || 0;
+    const price = parseFormattedNumber(row.querySelector('.returns-price').value) || 0;
+    const rate = parseFormattedNumber(row.querySelector('.returns-rate').value) || 1;
+    const amount = quantity * price * rate;
+    
+    // Format amount with commas and 2 decimals
+    row.querySelector('.returns-amount').value = formatNumberWithCommas(amount);
+}
+
+function deleteReturnsRow(button) {
+    if (isCanceled) return;
+    
+    const row = button.closest('tr');
+    const tbody = document.getElementById('sales-returns-tbody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length > 1) {
+        row.remove();
+        updateSalesTotals();
+    } else {
+        alert('Cannot remove the last row');
+    }
+}
+
+// Replace the addSalesRowEventListeners function with this:
+
+function addSalesRowEventListeners(row, rowIndex) {
+    const codeInput = row.querySelector('.sales-product-code');
+    const descInput = row.querySelector('.sales-product-desc');
+    const quantityInput = row.querySelector('.sales-quantity');
+    const unitSelect = row.querySelector('.sales-unit');
+    const priceInput = row.querySelector('.sales-price');
+    const rateInput = row.querySelector('.sales-rate');
+    const amountInput = row.querySelector('.sales-amount');
+    
+    // Remove blue outline on focus
+    codeInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+    });
+    
+    // Price input - format on blur only
+    priceInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+        
+        // Remove formatting while editing
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = rawValue.toString();
+        } else {
+            // If value is 0 or empty, clear it for editing
+            this.value = '';
+        }
+        this.classList.add('raw-input');
+        
+        // Set cursor to end of input
+        setTimeout(() => {
+            this.setSelectionRange(this.value.length, this.value.length);
+        }, 0);
+    });
+    
+    priceInput.addEventListener('blur', function() {
+        // Format only on blur if there's a value
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = formatNumberWithCommas(rawValue);
+        } else {
+            // If empty or 0, show placeholder
+            this.value = '';
+        }
+        this.classList.remove('raw-input');
+        calculateSalesRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Rate input - format on blur only
+    rateInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+        
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue) && rawValue !== 1) {
+            this.value = rawValue.toString();
+        } else {
+            // If value is 1 (default), clear it for editing
+            this.value = '';
+        }
+        this.classList.add('raw-input');
+        
+        // Set cursor to end of input
+        setTimeout(() => {
+            this.setSelectionRange(this.value.length, this.value.length);
+        }, 0);
+    });
+    
+    rateInput.addEventListener('blur', function() {
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue) && rawValue !== 1) {
+            this.value = formatNumberWithCommas(rawValue);
+        } else {
+            // If empty or 1, show default value
+            this.value = '1.00';
+        }
+        this.classList.remove('raw-input');
+        calculateSalesRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Product code input - auto-fill description, price, and unit
+    codeInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+    
+        // If code is cleared, also clear description
+        if (!searchTerm) {
+            descInput.value = '';
+            priceInput.value = '';
+            calculateSalesRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        // Search for exact code match first
+        if (products[searchTerm]) {
+            descInput.value = products[searchTerm].description;
+            priceInput.value = formatNumberWithCommas(products[searchTerm].price);
+            
+            calculateSalesRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        // Search for partial code or description match
+        if (searchTerm.length > 1) {
+            for (const [code, product] of Object.entries(products)) {
+                if (code.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    product.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    descInput.value = product.description;
+                    priceInput.value = formatNumberWithCommas(product.price);
+                    
+                    calculateSalesRowAmount(rowIndex);
+                    updateSalesTotals();
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Product description input - auto-fill code, price, and unit
+    descInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+
+        // If description is cleared, also clear code
+        if (!searchTerm) {
+            codeInput.value = '';
+            priceInput.value = '';
+            calculateSalesRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        if (searchTerm.length > 2) {
+            for (const [code, product] of Object.entries(products)) {
+                if (product.description.toLowerCase().includes(searchTerm)) {
+                    // Auto-fill code and other fields
+                    codeInput.value = code;
+                    priceInput.value = formatNumberWithCommas(product.price);
+                    
+                    calculateSalesRowAmount(rowIndex);
+                    updateSalesTotals();
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Quantity change - auto-update unit and amount
+    quantityInput.addEventListener('input', function() {
+        const quantity = parseInt(this.value) || 1;
+        
+        // Auto-change unit from PC to PCS if quantity > 1
+        if (quantity > 1 && unitSelect.value === 'PC') {
+            unitSelect.value = 'PCS';
+        } else if (quantity === 1 && unitSelect.value === 'PCS') {
+            unitSelect.value = 'PC';
+        }
+        
+        calculateSalesRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Remove outline from all inputs on focus
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.outline = 'none';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Tab navigation
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                if (index === inputs.length - 2) {
+                    // Last field in row, add new row and focus on first field
+                    addSalesRow();
+                    const newRows = document.querySelectorAll('#sales-items-tbody tr');
+                    const lastRow = newRows[newRows.length - 1];
+                    lastRow.querySelector('.sales-product-code').focus();
+                } else {
+                    // Move to next field in same row
+                    inputs[index + 1].focus();
+                }
+            }
+        });
+    });
+}
+
+// Also update the addReturnsRowEventListeners function similarly:
+
+function addReturnsRowEventListeners(row, rowIndex) {
+    const codeInput = row.querySelector('.returns-product-code');
+    const descInput = row.querySelector('.returns-product-desc');
+    const quantityInput = row.querySelector('.returns-quantity');
+    const unitSelect = row.querySelector('.returns-unit');
+    const priceInput = row.querySelector('.returns-price');
+    const rateInput = row.querySelector('.returns-rate');
+    const amountInput = row.querySelector('.returns-amount');
+    
+    // Remove blue outline
+    codeInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+    });
+    
+    descInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+    });
+    
+    // Price input - format on blur only
+    priceInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+        
+        // Remove formatting while editing
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = rawValue.toString();
+        } else {
+            // If value is 0 or empty, clear it for editing
+            this.value = '';
+        }
+        this.classList.add('raw-input');
+        
+        // Set cursor to end of input
+        setTimeout(() => {
+            this.setSelectionRange(this.value.length, this.value.length);
+        }, 0);
+    });
+    
+    priceInput.addEventListener('blur', function() {
+        // Format only on blur if there's a value
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = formatNumberWithCommas(rawValue);
+        } else {
+            // If empty or 0, show placeholder
+            this.value = '';
+        }
+        this.classList.remove('raw-input');
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Rate input - format on blur only
+    rateInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+        
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue) && rawValue !== 1) {
+            this.value = rawValue.toString();
+        } else {
+            // If value is 1 (default), clear it for editing
+            this.value = '';
+        }
+        this.classList.add('raw-input');
+        
+        // Set cursor to end of input
+        setTimeout(() => {
+            this.setSelectionRange(this.value.length, this.value.length);
+        }, 0);
+    });
+    
+    rateInput.addEventListener('blur', function() {
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue) && rawValue !== 1) {
+            this.value = formatNumberWithCommas(rawValue);
+        } else {
+            // If empty or 1, show default value
+            this.value = '1.00';
+        }
+        this.classList.remove('raw-input');
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Product code change
+    codeInput.addEventListener('input', function() {
+        const code = this.value.trim();
+        
+        // If code is cleared, also clear description and price
+        if (!code) {
+            descInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        if (invoiceProducts[code]) {
+            descInput.value = invoiceProducts[code].description;
+            priceInput.value = formatNumberWithCommas(invoiceProducts[code].price);
+            
+            quantityInput.max = invoiceProducts[code].maxQuantity;
+            quantityInput.title = `Max: ${invoiceProducts[code].maxQuantity}`;
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+        } else {
+            descInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            updateSalesTotals();
+        }
+    });
+    
+    // Product description change - clear code if description is cleared
+    descInput.addEventListener('input', function() {
+        const desc = this.value.trim();
+        
+        // If description is cleared, also clear code and price
+        if (!desc) {
+            codeInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+            return;
+        }
+        
+        // Search for product by description in invoice products
+        let found = false;
+        for (const [code, product] of Object.entries(invoiceProducts)) {
+            if (product.description.toLowerCase().includes(desc.toLowerCase())) {
+                codeInput.value = code;
+                priceInput.value = formatNumberWithCommas(product.price);
+                quantityInput.max = product.maxQuantity;
+                quantityInput.title = `Max: ${product.maxQuantity}`;
+                calculateReturnsRowAmount(rowIndex);
+                updateSalesTotals();
+                found = true;
+                break;
+            }
+        }
+        
+        // If no match found, clear code and price
+        if (!found) {
+            codeInput.value = '';
+            priceInput.value = '';
+            quantityInput.max = 0;
+            quantityInput.title = 'Item not in invoice';
+            calculateReturnsRowAmount(rowIndex);
+            updateSalesTotals();
+        }
+    });
+    
+    // Quantity change - auto-update unit between PC and PCS
+    quantityInput.addEventListener('input', function() {
+        const max = parseInt(this.max) || 0;
+        const value = parseInt(this.value) || 0;
+        
+        // Check quantity limit
+        if (value > max) {
+            this.value = max;
+        }
+        
+        // Auto-change unit from PC to PCS if quantity > 1
+        if (value > 1 && unitSelect.value === 'PC') {
+            unitSelect.value = 'PCS';
+        } else if (value === 1 && unitSelect.value === 'PCS') {
+            unitSelect.value = 'PC';
+        }
+        
+        calculateReturnsRowAmount(rowIndex);
+        updateSalesTotals();
+    });
+    
+    // Tab navigation - need to include select elements too
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                if (index === inputs.length - 2) {
+                    addReturnsRow();
+                    const newRows = document.querySelectorAll('#sales-returns-tbody tr');
+                    const lastRow = newRows[newRows.length - 1];
+                    lastRow.querySelector('.returns-product-code').focus();
+                } else {
+                    inputs[index + 1].focus();
+                }
+            }
+        });
+    });
+}
+
+// Also update the addPaymentRowEventListeners function for payment amount:
+
+function addPaymentRowEventListeners(row, rowIndex) {
+    const typeSelect = row.querySelector('.payment-type');
+    const bankInput = row.querySelector('.payment-bank');
+    const chequeInput = row.querySelector('.payment-cheque-no');
+    const amountInput = row.querySelector('.payment-amount');
+    const dateInput = row.querySelector('.payment-date');
+    const daysInput = row.querySelector('.payment-days');
+    const statusSelect = row.querySelector('.payment-status');
+    
+    // Payment date formatting
+    dateInput.addEventListener('blur', function() {
+        const formatted = parseDate(this.value);
+        if (formatted) {
+            this.value = formatted;
+        }
+        updatePaymentDays(row);
+    });
+    
+    // Payment amount - format on blur only
+    amountInput.addEventListener('focus', function() {
+        this.style.outline = 'none';
+        this.style.boxShadow = 'none';
+        
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = rawValue.toString();
+        } else {
+            // If value is 0 or empty, clear it for editing
+            this.value = '';
+        }
+        this.classList.add('raw-input');
+        
+        // Set cursor to end of input
+        setTimeout(() => {
+            this.setSelectionRange(this.value.length, this.value.length);
+        }, 0);
+    });
+    
+    amountInput.addEventListener('blur', function() {
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue) && rawValue !== 0) {
+            this.value = formatNumberWithCommas(rawValue);
+        } else {
+            // If empty or 0, show placeholder
+            this.value = '';
+        }
+        this.classList.remove('raw-input');
+        updateInvoiceSummary();
+    });
+    
+    // Update invoice date when invoice date changes
+    const invoiceDateInput = document.getElementById('sales_invoice_date');
+    if (invoiceDateInput) {
+        invoiceDateInput.addEventListener('change', function() {
+            const formatted = parseDate(this.value);
+            if (formatted) {
+                invoiceDate = new Date(formatted);
+                updatePaymentDays(row);
+            }
+        });
+    }
+    
+    // Payment type change - lock/unlock fields
+    typeSelect.addEventListener('change', function() {
+        updatePaymentRowState(row);
+        updatePaymentDays(row);
+        updateInvoiceSummary();
+    });
+    
+    // Payment date change - update days
+    dateInput.addEventListener('change', function() {
+        updatePaymentDays(row);
+    });
+    
+    // Status change - update totals if bounced
+    statusSelect.addEventListener('change', function() {
+        updateInvoiceSummary();
+    });
+    
+    // Tab navigation
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                if (index === inputs.length - 2) {
+                    addPaymentRow();
+                    const newRows = document.querySelectorAll('#sales-payments-tbody tr');
+                    const lastRow = newRows[newRows.length - 1];
+                    lastRow.querySelector('.payment-type').focus();
+                } else {
+                    inputs[index + 1].focus();
+                }
+            }
+        });
+    });
+}
+
+function calculateSalesRowAmount(rowIndex) {
+    const row = document.querySelectorAll('#sales-items-tbody tr')[rowIndex];
+    if (!row) return;
+    
+    const quantity = parseFloat(row.querySelector('.sales-quantity').value) || 0;
+    const price = parseFormattedNumber(row.querySelector('.sales-price').value) || 0;
+    const rate = parseFormattedNumber(row.querySelector('.sales-rate').value) || 1;
+    const amount = quantity * price * rate;
+    
+    // Format amount with commas and 2 decimals
+    row.querySelector('.sales-amount').value = formatNumberWithCommas(amount);
+}
+
+function deleteSalesRow(button) {
+    if (isCanceled) return;
+    
+    const row = button.closest('tr');
+    const tbody = document.getElementById('sales-items-tbody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length > 1) {
+        row.remove();
+        updateSalesTotals();
+    } else {
+        alert('Cannot remove the last row');
+    }
+}
+
+function updateSalesTotals() {
+    // This function now just calls updateInvoiceSummary
+    // since all calculations are done in updateInvoiceSummary
+    updateInvoiceSummary();
+}
+
+// Payments functionality
+function initializePaymentsTable() {
+    const tbody = document.getElementById('sales-payments-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    paymentsRowCount = 0;
+    addPaymentRow();
+}
+
+function addPaymentRow() {
+    const tbody = document.getElementById('sales-payments-tbody');
+    if (!tbody) return;
+    
+    const row = document.createElement('tr');
+    
+    row.innerHTML = `
+        <td>
+            <select class="form-control table-field payment-type" 
+                    name="payments[${paymentsRowCount}][type]" 
+                    data-row="${paymentsRowCount}">
+                <option value="cash">Cash</option>
+                <option value="cheque">Cheque</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" class="form-control table-field payment-bank" 
+                   name="payments[${paymentsRowCount}][bank]" 
+                   placeholder="Bank name" 
+                   data-row="${paymentsRowCount}">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field payment-cheque-no" 
+                   name="payments[${paymentsRowCount}][cheque_no]" 
+                   placeholder="Cheque number" 
+                   data-row="${paymentsRowCount}">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field payment-amount raw-input" 
+                   name="payments[${paymentsRowCount}][amount]" 
+                   placeholder="0.00" 
+                   data-row="${paymentsRowCount}" 
+                   style="text-align: right;">
+        </td>
+        <td>
+            <input type="text" class="form-control table-field payment-date date-input" 
+                   name="payments[${paymentsRowCount}][date]" 
+                   placeholder="mm/dd/yy" 
+                   data-row="${paymentsRowCount}">
+        </td>
+        <td>
+            <input type="number" class="form-control table-field payment-days" 
+                   name="payments[${paymentsRowCount}][days]" 
+                   readonly 
+                   data-row="${paymentsRowCount}" 
+                   style="text-align: center;">
+        </td>
+        <td>
+            <select class="form-control table-field payment-status" 
+                    name="payments[${paymentsRowCount}][status]" 
+                    data-row="${paymentsRowCount}">
+                <option value="valid">Valid</option>
+                <option value="bounced">Bounced</option>
+            </select>
+        </td>
+        <td>
+            <button type="button" class="remove-row" title="Remove row" onclick="deletePaymentRow(this)">✕</button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    
+    addPaymentRowEventListeners(row, paymentsRowCount);
+    paymentsRowCount++;
+    
+    // Set initial states
+    updatePaymentRowState(row);
+}
+
+function addPaymentRowEventListeners(row, rowIndex) {
+    const typeSelect = row.querySelector('.payment-type');
+    const bankInput = row.querySelector('.payment-bank');
+    const chequeInput = row.querySelector('.payment-cheque-no');
+    const amountInput = row.querySelector('.payment-amount');
+    const dateInput = row.querySelector('.payment-date');
+    const daysInput = row.querySelector('.payment-days');
+    const statusSelect = row.querySelector('.payment-status');
+    
+    // Payment date formatting
+    dateInput.addEventListener('blur', function() {
+        const formatted = parseDate(this.value);
+        if (formatted) {
+            this.value = formatted;
+        }
+        updatePaymentDays(row);
+    });
+    
+    // Payment amount - format on blur only
+    amountInput.addEventListener('focus', function() {
+        const rawValue = parseFormattedNumber(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = rawValue;
+        }
+        this.classList.add('raw-input');
+    });
+    
+    amountInput.addEventListener('blur', function() {
+        const rawValue = parseFloat(this.value);
+        if (!isNaN(rawValue)) {
+            this.value = formatNumberWithCommas(rawValue);
+        }
+        this.classList.remove('raw-input');
+        updateInvoiceSummary();
+    });
+    
+    // Update invoice date when invoice date changes
+    const invoiceDateInput = document.getElementById('sales_invoice_date');
+    if (invoiceDateInput) {
+        invoiceDateInput.addEventListener('change', function() {
+            const formatted = parseDate(this.value);
+            if (formatted) {
+                invoiceDate = new Date(formatted);
+                updatePaymentDays(row);
+            }
+        });
+    }
+    
+    // Payment type change - lock/unlock fields
+    typeSelect.addEventListener('change', function() {
+        updatePaymentRowState(row);
+        updatePaymentDays(row);
+        updateInvoiceSummary();
+    });
+    
+    // Payment date change - update days
+    dateInput.addEventListener('change', function() {
+        updatePaymentDays(row);
+    });
+    
+    // Status change - update totals if bounced
+    statusSelect.addEventListener('change', function() {
+        updateInvoiceSummary();
+    });
+    
+    // Tab navigation
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                if (index === inputs.length - 2) {
+                    addPaymentRow();
+                    const newRows = document.querySelectorAll('#sales-payments-tbody tr');
+                    const lastRow = newRows[newRows.length - 1];
+                    lastRow.querySelector('.payment-type').focus();
+                } else {
+                    inputs[index + 1].focus();
+                }
+            }
+        });
+    });
+}
+
+function updatePaymentRowState(row) {
+    const typeSelect = row.querySelector('.payment-type');
+    const bankInput = row.querySelector('.payment-bank');
+    const chequeInput = row.querySelector('.payment-cheque-no');
+    const statusSelect = row.querySelector('.payment-status');
+    
+    if (typeSelect.value === 'cash') {
+        // Lock cheque-related fields for cash
+        bankInput.readOnly = true;
+        bankInput.value = '';
+        bankInput.style.backgroundColor = '#f8f9fa';
+        bankInput.placeholder = '-';
+        
+        chequeInput.readOnly = true;
+        chequeInput.value = '';
+        chequeInput.style.backgroundColor = '#f8f9fa';
+        chequeInput.placeholder = '-';
+        
+        // Lock status for cash (always valid)
+        statusSelect.disabled = true;
+        statusSelect.value = 'valid';
+        statusSelect.style.backgroundColor = '#f8f9fa';
+    } else {
+        // Unlock cheque-related fields
+        bankInput.readOnly = false;
+        bankInput.style.backgroundColor = '';
+        bankInput.placeholder = 'Bank name';
+        
+        chequeInput.readOnly = false;
+        chequeInput.style.backgroundColor = '';
+        chequeInput.placeholder = 'Cheque number';
+        
+        // Unlock status for cheque
+        statusSelect.disabled = false;
+        statusSelect.style.backgroundColor = '';
+    }
+}
+
+function updatePaymentDays(row) {
+    const dateInput = row.querySelector('.payment-date');
+    const daysInput = row.querySelector('.payment-days');
+    
+    if (dateInput.value && invoiceDate) {
+        const paymentDate = new Date(parseDate(dateInput.value));
+        if (!isNaN(paymentDate.getTime())) {
+            const timeDiff = paymentDate.getTime() - invoiceDate.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            daysInput.value = daysDiff >= 0 ? daysDiff : 0;
+        } else {
+            daysInput.value = '';
+        }
+    } else {
+        daysInput.value = '';
+    }
+}
+
+function deletePaymentRow(button) {
+    if (isCanceled) return;
+    
+    const row = button.closest('tr');
+    const tbody = document.getElementById('sales-payments-tbody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length > 1) {
+        row.remove();
+        updateInvoiceSummary();
+    } else {
+        alert('Cannot remove the last row');
+    }
+}
+
+// Invoice Summary functionality
+function initializeInvoiceSummary() {
+    // Set initial values
+    updateInvoiceSummary();
+    
+    // Listen for discount changes
+    const discountInput = document.getElementById('discount_summary');
+    if (discountInput) {
+        discountInput.addEventListener('input', updateInvoiceSummary);
+    }
+}
+
+function updateInvoiceSummary() {
+    // Calculate invoice total from sales items
+    let invoiceTotal = 0;
+    document.querySelectorAll('.sales-amount').forEach(amountInput => {
+        invoiceTotal += parseFormattedNumber(amountInput.value) || 0;
+    });
+    
+    // Subtract returns
+    let returnsTotal = 0;
+    document.querySelectorAll('.returns-amount').forEach(amountInput => {
+        returnsTotal += parseFormattedNumber(amountInput.value) || 0;
+    });
+    
+    const netInvoiceTotal = invoiceTotal - returnsTotal;
+    const discount = parseFormattedNumber(document.getElementById('discount_summary').value) || 0;
+    
+    // Calculate partial payment from payments table
+    let partialPayment = 0;
+    document.querySelectorAll('#sales-payments-tbody tr').forEach(row => {
+        const amount = parseFormattedNumber(row.querySelector('.payment-amount').value) || 0;
+        const status = row.querySelector('.payment-status').value;
+        
+        if (status === 'valid') {
+            partialPayment += amount;
+        }
+    });
+    
+    // Calculate
+    const grandTotal = netInvoiceTotal - discount;
+    const amountDue = grandTotal - partialPayment;
+    
+    // Update displays (plain text, no input boxes) with commas
+    const partialPaymentDisplay = document.getElementById('partial_payment_display');
+    const grandTotalDisplay = document.getElementById('grand_total_display');
+    const amountDueDisplay = document.getElementById('amount_due_display');
+    
+    if (partialPaymentDisplay) {
+        partialPaymentDisplay.textContent = formatNumberWithCommas(partialPayment);
+    }
+    
+    if (grandTotalDisplay) {
+        grandTotalDisplay.textContent = formatNumberWithCommas(grandTotal);
+    }
+    
+    if (amountDueDisplay) {
+        const displayAmount = amountDue > 0 ? amountDue : 0;
+        amountDueDisplay.textContent = formatNumberWithCommas(displayAmount);
+        
+        // Update color based on amount due (green if 0, red if > 0)
+        if (amountDue > 0) {
+            amountDueDisplay.style.color = '#dc3545';
+            amountDueDisplay.classList.remove('text-success');
+            amountDueDisplay.classList.add('text-danger');
+        } else {
+            amountDueDisplay.style.color = '#198754';
+            amountDueDisplay.classList.remove('text-danger');
+            amountDueDisplay.classList.add('text-success');
+        }
+    }
+}
+
+// Action Button Functions
+function printInvoice() {
+    // Save the invoice first
+    if (saveInvoice()) {
+        // Trigger print dialog
+        window.print();
+    }
+}
+
+function clearInvoice() {
+    if (confirm('Are you sure you want to clear all fields? This cannot be undone.')) {
+        initializeSalesTable();
+        initializeReturnsTable();
+        initializePaymentsTable();
+        
+        // Clear all fields except invoice number
+        document.getElementById('sales_invoice_date').value = '';
+        document.getElementById('customerDropdown').value = '';
+        document.getElementById('customerAddress').value = '';
+        document.getElementById('salesAgent').value = '';
+        document.getElementById('plateNo').value = '';
+        document.getElementById('discount_summary').value = '0.00';
+        document.getElementById('notes').value = '';
+        document.getElementById('terms').value = '';
+        document.getElementById('receivedCheckbox').checked = false;
+        
+        // Reset invoice status
+        document.getElementById('invoice_status').value = 'active';
+        isCanceled = false;
+        document.getElementById('canceled-banner').style.display = 'none';
+        document.getElementById('sales-invoice-form').classList.remove('canceled-state');
+        
+        updateInvoiceSummary();
+    }
+}
+
+function saveInvoice() {
+    // Validate required fields
+    const invoiceNumber = document.getElementById('sales_invoice_number').value;
+    const invoiceDate = document.getElementById('sales_invoice_date').value;
+    const salesAgent = document.getElementById('salesAgent').value;
+    const customer = document.getElementById('customerDropdown').value;
+    
+    if (!invoiceNumber || !invoiceDate || !salesAgent || !customer) {
+        alert('Please fill in all required fields: Invoice No., Date, Sales Agent, and Customer.');
+        return false;
+    }
+    
+    // Validate at least one item
+    const hasItems = document.querySelectorAll('#sales-items-tbody tr .sales-product-code[value]').length > 0;
+    if (!hasItems) {
+        alert('Please add at least one invoice item.');
+        return false;
+    }
+    
+    // Submit the form
+    document.getElementById('sales-invoice-form').submit();
+    return true;
+}
+
+function cancelInvoice() {
+    if (confirm('Are you sure you want to cancel this invoice? This will mark it as canceled and make it read-only.')) {
+        // Show canceled banner
+        document.getElementById('canceled-banner').style.display = 'block';
+        
+        // Add canceled state styling
+        document.getElementById('sales-invoice-form').classList.add('canceled-state');
+        
+        // Update invoice status
+        document.getElementById('invoice_status').value = 'canceled';
+        isCanceled = true;
+        
+        // Disable all inputs except Re-use and Back buttons
+        const allInputs = document.querySelectorAll('input, select, textarea, button');
+        allInputs.forEach(input => {
+            if (!input.classList.contains('btn') || input.classList.contains('btn-info') || input.classList.contains('btn-outline-secondary')) {
+                // Keep Re-use and Back buttons enabled
+            } else if (input.classList.contains('btn')) {
+                input.disabled = true;
+            }
+        });
+        
+        alert('Invoice has been canceled. All fields are now read-only.');
+    }
+}
+
+function reuseInvoice() {
+    if (confirm('Are you sure you want to re-use this canceled invoice? This will make it editable again.')) {
+        // Hide canceled banner
+        document.getElementById('canceled-banner').style.display = 'none';
+        
+        // Remove canceled state styling
+        document.getElementById('sales-invoice-form').classList.remove('canceled-state');
+        
+        // Update invoice status
+        document.getElementById('invoice_status').value = 'active';
+        isCanceled = false;
+        
+        // Enable all inputs
+        const allInputs = document.querySelectorAll('input, select, textarea, button');
+        allInputs.forEach(input => {
+            input.disabled = false;
+        });
+        
+        alert('Invoice is now editable again.');
+    }
+}
+
+function backToNew() {
+    if (confirm('Return to a new invoice? All unsaved changes will be lost.')) {
+        // Clear the form
+        clearInvoice();
+        
+        // Optionally redirect to a new invoice page or reset to defaults
+        // For now, just clear the form as requested
+        window.location.href = "{% url 'create_invoice' %}?tab=sales";
+    }
+}
+
+// Form submission handlers
+const salesForm = document.getElementById('sales-invoice-form');
+if (salesForm) {
+    salesForm.addEventListener('submit', function(e) {
+        document.getElementById('sales_payment_status').value = 'paid';
+        
+        // Clean up empty rows
+        document.querySelectorAll('#sales-items-tbody tr').forEach(row => {
+            const code = row.querySelector('.sales-product-code').value;
+            const desc = row.querySelector('.sales-product-desc').value;
+            if (!code && !desc) {
+                row.remove();
+            }
+        });
+
+        document.querySelectorAll('#sales-returns-tbody tr').forEach(row => {
+            const code = row.querySelector('.returns-product-code').value;
+            const desc = row.querySelector('.returns-product-desc').value;
+            if (!code && !desc) {
+                row.remove();
+            }
+        });
+
+        document.querySelectorAll('#sales-payments-tbody tr').forEach(row => {
+            const amount = row.querySelector('.payment-amount').value;
+            if (!amount || parseFormattedNumber(amount) === 0) {
+                row.remove();
+            }
+        });
+    });
+}
+</script>
+{% endblock %}
