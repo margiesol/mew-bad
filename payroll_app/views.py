@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from payroll_app.models import Account, Product, Customer, Supplier, SalesInvoice, PurchaseInvoice, InvoiceItem, PurchaseInvoiceItem
+from payroll_app.models import Account, Customer, Agent, Product, SalesTransaction, OrderRecord, PaymentRecord, ChequePayment, Bank, ReturnRecord
 from django.contrib import messages
 from datetime import date
 from django.db.models import Sum
@@ -103,14 +103,14 @@ def main_page(request):
     active_tab = request.GET.get('tab', 'sales')
 
     # --- SALES LOGIC ---
-    sales_qs = SalesInvoice.objects.all().order_by('-invoice_date')
+    sales_qs = SalesTransaction.objects.all().order_by('date')
     customers = Customer.objects.all()
 
     # Convert QuerySet into list of dicts (arrays)
     sales_invoices_list = [
         {
-            'invoice_number': inv.invoice_number,
-            'invoice_date': inv.invoice_date,
+            'invoice_id': inv.invoice_id,
+            'date': inv.date,
             'customer_id': inv.customer.id if inv.customer else None,
             'customer_name': inv.customer.company_name if inv.customer else 'N/A',
             'grand_total': float(inv.grand_total),
@@ -127,13 +127,13 @@ def main_page(request):
     for inv in sales_invoices_list:
         sales_by_customer.setdefault(inv['customer_id'], []).append(inv)
 
-    # Keyed by invoice_number
-    sales_by_invoice_number = {inv['invoice_number']: inv for inv in sales_invoices_list}
+    # Keyed by invoice_id
+    sales_by_invoice_id = {inv['invoice_id']: inv for inv in sales_invoices_list}
 
     filtered_sales = sales_invoices_list
 
     # --- Apply sales filters ---
-    sales_invoice_number = request.GET.get('sales_invoice_number', '').strip()
+    sales_invoice_id = request.GET.get('sales_invoice_id', '').strip()
     sales_customer = request.GET.get('sales_customer', '').strip()
     sales_start_date = request.GET.get('sales_start_date', '').strip()
     sales_end_date = request.GET.get('sales_end_date', '').strip()
@@ -141,8 +141,8 @@ def main_page(request):
     sales_payment_type = request.GET.get('sales_payment_type', '').strip()
 
      # Filter by invoice number (exact match)
-    if sales_invoice_number:
-        invoice = sales_by_invoice_number.get(sales_invoice_number)
+    if sales_invoice_id:
+        invoice = sales_by_invoice_id.get(sales_invoice_id)
         filtered_sales = [invoice] if invoice else []
 
     # Filter by customer (hash table lookup)
@@ -153,11 +153,11 @@ def main_page(request):
     # Other filters: date range, payment type/status
     if sales_start_date:
         start_date = datetime.fromisoformat(sales_start_date).date()
-        filtered_sales = [inv for inv in filtered_sales if inv['invoice_date'] >= start_date]
+        filtered_sales = [inv for inv in filtered_sales if inv['date'] >= start_date]
 
     if sales_end_date:
         end_date = datetime.fromisoformat(sales_end_date).date()
-        filtered_sales = [inv for inv in filtered_sales if inv['invoice_date'] <= end_date]
+        filtered_sales = [inv for inv in filtered_sales if inv['date'] <= end_date]
 
     if sales_payment_type:
         filtered_sales = [inv for inv in filtered_sales if inv['payment_type'] == sales_payment_type]
@@ -168,15 +168,15 @@ def main_page(request):
     total_sales_due = sum(inv['amount_due'] for inv in filtered_sales)
 
     # --- PURCHASING LOGIC ---
-    purchase_qs = PurchaseInvoice.objects.select_related('supplier').all().order_by('-invoice_date')
-    suppliers = Supplier.objects.all()
+    purchase_qs = PaymentRecord.objects.select_related('invoice').all().order_by('-date')
+    #suppliers = Supplier.objects.all()
 
     purchase_invoices_list = [
         {
-            'invoice_number': inv.invoice_number,
-            'invoice_date': inv.invoice_date,
-            'supplier_id': inv.supplier.id,
-            'supplier_name': inv.supplier.supplier_name,
+            'invoice_id': inv.invoice_id,
+            'date': inv.date,
+            #'supplier_id': inv.supplier.id,
+            #'supplier_name': inv.supplier.supplier_name,
             'invoice_total': float(inv.invoice_total),
             'amount_due': float(inv.amount_due),
             'payment_type': inv.payment_type,
@@ -185,34 +185,34 @@ def main_page(request):
     ]
 
     # Hash table for supplier lookup
-    purchase_by_supplier = {}
-    for inv in purchase_invoices_list:
-        purchase_by_supplier.setdefault(inv['supplier_id'], []).append(inv)
+    #purchase_by_supplier = {}
+    #for inv in purchase_invoices_list:
+    #    purchase_by_supplier.setdefault(inv['supplier_id'], []).append(inv)
 
     # Apply filters (similar logic as sales)
     filtered_purchases = purchase_invoices_list
 
-    purchase_invoice_number = request.GET.get('purchase_invoice_number', '').strip()
-    supplier = request.GET.get('supplier', '').strip()
+    purchase_invoice_id = request.GET.get('purchase_invoice_id', '').strip()
+    #supplier = request.GET.get('supplier', '').strip()
     purchase_start_date = request.GET.get('purchase_start_date', '').strip()
     purchase_end_date = request.GET.get('purchase_end_date', '').strip()
     purchase_payment_status = request.GET.get('purchase_payment_status', '').strip()
     purchase_payment_type = request.GET.get('purchase_payment_type', '').strip()
 
-    if purchase_invoice_number:
-        filtered_purchases = [inv for inv in filtered_purchases if purchase_invoice_number in inv['invoice_number']]
+    if purchase_invoice_id:
+        filtered_purchases = [inv for inv in filtered_purchases if purchase_invoice_id in inv['invoice_id']]
 
-    if supplier:
-        supplier_id = int(supplier)
-        filtered_purchases = purchase_by_supplier.get(supplier_id, [])
+    #if supplier:
+     #   supplier_id = int(supplier)
+      #  filtered_purchases = purchase_by_supplier.get(supplier_id, [])
 
     if purchase_start_date:
         start_date = datetime.fromisoformat(purchase_start_date).date()
-        filtered_purchases = [inv for inv in filtered_purchases if inv['invoice_date'] >= start_date]
+        filtered_purchases = [inv for inv in filtered_purchases if inv['date'] >= start_date]
 
     if purchase_end_date:
         end_date = datetime.fromisoformat(purchase_end_date).date()
-        filtered_purchases = [inv for inv in filtered_purchases if inv['invoice_date'] <= end_date]
+        filtered_purchases = [inv for inv in filtered_purchases if inv['date'] <= end_date]
 
     if purchase_payment_type:
         filtered_purchases = [inv for inv in filtered_purchases if inv['payment_type'] == purchase_payment_type]
@@ -230,7 +230,7 @@ def main_page(request):
         'total_sales_due': total_sales_due,
 
         'purchase_invoices': filtered_purchases,
-        'suppliers': suppliers,
+       # 'suppliers': suppliers,
         'total_purchases': total_purchases,
         'total_purchases_paid': total_purchases_paid,
         'total_purchases_due': total_purchases_due,
@@ -243,41 +243,41 @@ def main_page(request):
 
 def create_invoice(request):
     customers = Customer.objects.all()
-    suppliers = Supplier.objects.all()
+    #suppliers = Supplier.objects.all()
     products = Product.objects.all()
     
     # Generate next sales invoice number
     current_year = date.today().strftime('%y')
     
     # Sales invoice number
-    last_sales_invoice = SalesInvoice.objects.filter(
-        invoice_number__startswith=f"{current_year}OF"
-    ).order_by('-invoice_number').first()
+    last_sales_invoice = SalesTransaction.objects.filter(
+        invoice_id=f"{current_year}OF"
+    ).order_by('-invoice_id').first()
     
     if last_sales_invoice:
         try:
-            last_number = int(last_sales_invoice.invoice_number[4:])
+            last_number = int(last_sales_invoice.invoice_id[4:])
             next_sales_number = last_number + 1
-            next_sales_invoice_number = f"{current_year}OF{next_sales_number:06d}"
+            next_sales_invoice_id = f"{current_year}OF{next_sales_number:06d}"
         except (ValueError, IndexError):
-            next_sales_invoice_number = f"{current_year}OF000001"
+            next_sales_invoice_id = f"{current_year}OF000001"
     else:
-        next_sales_invoice_number = f"{current_year}OF000001"
+        next_sales_invoice_id = f"{current_year}OF000001"
     
     # Purchase invoice number
-    last_purchase_invoice = PurchaseInvoice.objects.filter(
-        invoice_number__startswith=f"{current_year}PO"
-    ).order_by('-invoice_number').first()
+    last_purchase_invoice = SalesTransaction.objects.filter(
+        invoice_id__startswith=f"{current_year}PO"
+    ).order_by('-invoice_id').first()
     
     if last_purchase_invoice:
         try:
-            last_number = int(last_purchase_invoice.invoice_number[4:])
+            last_number = int(last_purchase_invoice.invoice_id[4:])
             next_purchase_number = last_number + 1
-            next_purchase_invoice_number = f"{current_year}PO{next_purchase_number:06d}"
+            next_purchase_invoice_id = f"{current_year}PO{next_purchase_number:06d}"
         except (ValueError, IndexError):
-            next_purchase_invoice_number = f"{current_year}PO000001"
+            next_purchase_invoice_id = f"{current_year}PO000001"
     else:
-        next_purchase_invoice_number = f"{current_year}PO000001"
+        next_purchase_invoice_id = f"{current_year}PO000001"
     
     # Check if loading existing invoice
     load_invoice = request.GET.get('load')
@@ -287,13 +287,13 @@ def create_invoice(request):
     if load_invoice:
         try:
             # Try sales invoice first
-            invoice = SalesInvoice.objects.get(invoice_number=load_invoice)
+            invoice = SalesTransaction.objects.get(invoice_id=load_invoice)
             is_update = True
             invoice_data = {
                 'type': 'sales',
                 'id': invoice.id,
-                'invoice_number': invoice.invoice_number,
-                'invoice_date': invoice.invoice_date.strftime('%Y-%m-%d'),
+                'invoice_id': invoice.invoice_id,
+                'date': invoice.date.strftime('%Y-%m-%d'),
                 'plate_no': invoice.plate_no or '',
                 'customer_id': invoice.customer.id,
                 'payment_type': invoice.payment_type,
@@ -313,16 +313,16 @@ def create_invoice(request):
                     for item in invoice.items.all()
                 ]
             }
-        except SalesInvoice.DoesNotExist:
+        except SalesTransaction.DoesNotExist:
             try:
                 # Try purchase invoice
-                invoice = PurchaseInvoice.objects.get(invoice_number=load_invoice)
+                invoice = PaymentRecord.objects.get(invoice_id=load_invoice)
                 is_update = True
                 invoice_data = {
                     'type': 'purchase',
                     'id': invoice.id,
-                    'invoice_number': invoice.invoice_number,
-                    'invoice_date': invoice.invoice_date.strftime('%Y-%m-%d'),
+                    'invoice_id': invoice.invoice_id,
+                    'date': date.strftime('%Y-%m-%d'),
                     'supplier_id': invoice.supplier.id,
                     'payment_type': invoice.payment_type,
                     'discount': float(invoice.discount),
@@ -339,7 +339,7 @@ def create_invoice(request):
                         for item in invoice.items.all()
                     ]
                 }
-            except PurchaseInvoice.DoesNotExist:
+            except PaymentRecord.DoesNotExist:
                 messages.error(request, f'Invoice {load_invoice} not found.')
     
     # Determine active tab
@@ -351,8 +351,8 @@ def create_invoice(request):
         'customers': customers,
         'suppliers': suppliers,
         'products': products,
-        'next_sales_invoice_number': next_sales_invoice_number,
-        'next_purchase_invoice_number': next_purchase_invoice_number,
+        'next_sales_invoice_id': next_sales_invoice_id,
+        'next_purchase_invoice_id': next_purchase_invoice_id,
         'current_date': date.today(),
         'active_tab': active_tab,
         'invoice_data': invoice_data,
@@ -367,24 +367,24 @@ def sales_invoice_create(request):
             print("POST data:", dict(request.POST))
             
             # Get basic form data
-            invoice_number = request.POST.get('invoice_number')
-            invoice_date = request.POST.get('invoice_date')
+            invoice_id = request.POST.get('invoice_id')
+            date = request.POST.get('date')
             customer_id = request.POST.get('customer')
             payment_type = request.POST.get('payment_type', 'cash')
             discount = float(request.POST.get('discount', 0))
             subtotal = float(request.POST.get('subtotal', 0))
             grand_total = float(request.POST.get('grand_total', 0))
             
-            print(f"Invoice: {invoice_number}, Date: {invoice_date}, Customer: {customer_id}")
+            print(f"Invoice: {invoice_id}, Date: {date}, Customer: {customer_id}")
             print(f"Payment: {payment_type}, Discount: {discount}, Subtotal: {subtotal}, Grand Total: {grand_total}")
             
             # Get customer
             customer = Customer.objects.get(id=customer_id)
             
             # Create the invoice with simplified fields
-            invoice = SalesInvoice(
-                invoice_number=invoice_number,
-                invoice_date=invoice_date,
+            invoice = SalesTransaction(
+                invoice_id=invoice_id,
+                date=date,
                 customer=customer,
                 payment_type=payment_type,
                 discount=discount,
@@ -429,7 +429,7 @@ def sales_invoice_create(request):
                 item_count += 1
             
             print(f"=== DEBUG: Saved {item_count} items ===")
-            messages.success(request, f'Invoice {invoice_number} created successfully!')
+            messages.success(request, f'Invoice {invoice_id} created successfully!')
             return redirect('main_page')
                 
         except Exception as e:
@@ -444,8 +444,8 @@ def sales_invoice_create(request):
 def purchase_invoice_create(request):
     if request.method == 'POST':
         try:
-            invoice_number = request.POST.get('invoice_number')
-            invoice_date = request.POST.get('invoice_date')
+            invoice_id = request.POST.get('invoice_id')
+            date = request.POST.get('date')
             supplier_id = request.POST.get('supplier')
             payment_type = request.POST.get('payment_type', 'cash')
             discount = float(request.POST.get('discount', 0))
@@ -453,9 +453,9 @@ def purchase_invoice_create(request):
             supplier = Supplier.objects.get(id=supplier_id)
             
             # Create purchase invoice - REMOVED all bank/cheque fields
-            invoice = PurchaseInvoice(
-                invoice_number=invoice_number,
-                invoice_date=invoice_date,
+            invoice = PaymentRecord(
+                invoice_id=invoice_id,
+                date=date,
                 supplier=supplier,
                 payment_type=payment_type,
                 discount=discount,
@@ -499,7 +499,7 @@ def purchase_invoice_create(request):
                     rate = float(request.POST.get(f'items[{item_count}][rate]', 1))
                     amount = quantity * price * rate
                     
-                    PurchaseInvoiceItem.objects.create(
+                    Product.objects.create(
                         invoice=invoice,
                         product_code=code,
                         description=desc,
@@ -515,7 +515,7 @@ def purchase_invoice_create(request):
             if action == 'save_print':
                 return redirect('purchase_invoice_print', pk=invoice.id)
             else:
-                messages.success(request, f'Purchase Invoice {invoice_number} created successfully!')
+                messages.success(request, f'Purchase Invoice {invoice_id} created successfully!')
                 return redirect('main_page')
                 
         except Exception as e:
@@ -525,7 +525,7 @@ def purchase_invoice_create(request):
     return redirect('create_invoice')
 
 def sales_invoice_print(request, invoice_id):
-    invoice = get_object_or_404(SalesInvoice, id=invoice_id)
+    invoice = get_object_or_404(SalesTransaction, id=invoice_id)
     
     # Get invoice items
     try:
@@ -540,7 +540,7 @@ def sales_invoice_print(request, invoice_id):
     return render(request, 'sales_invoice_print.html', context)
 
 def purchase_invoice_print(request, invoice_id):
-    invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
+    invoice = get_object_or_404(PaymentRecord, id=invoice_id)
     
     # Get invoice items
     try:
@@ -864,6 +864,7 @@ def customer_delete(request, pk):
     active_tab = request.POST.get('tab', 'customer')
     return redirect(f'/profiles/?tab={active_tab}')
 
+'''
 def supplier_create(request):
     if request.method == 'POST':
         try:
@@ -928,3 +929,4 @@ def supplier_delete(request, pk):
     
     active_tab = request.POST.get('tab', 'supplier')
     return redirect(f'/profiles/?tab={active_tab}')
+'''

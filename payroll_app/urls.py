@@ -1,19 +1,3 @@
-"""
-URL configuration for MyInventorySystem project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.urls import path
 
 from django.contrib import admin
@@ -35,9 +19,9 @@ urlpatterns = [
     path('customer/create/', views.customer_create, name='customer_create'),
     path('customer/<int:pk>/update/', views.customer_update, name='customer_update'),
     path('customer/<int:pk>/delete/', views.customer_delete, name='customer_delete'),
-    path('supplier/create/', views.supplier_create, name='supplier_create'),
-    path('supplier/<int:pk>/update/', views.supplier_update, name='supplier_update'),
-    path('supplier/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
+    #path('supplier/create/', views.supplier_create, name='supplier_create'),
+    #path('supplier/<int:pk>/update/', views.supplier_update, name='supplier_update'),
+    #path('supplier/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
     
     path('create_invoice/', views.create_invoice, name='create_invoice'),
     path('sales_invoice/create/', views.sales_invoice_create, name='sales_invoice_create'),

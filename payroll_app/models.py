@@ -9,7 +9,8 @@ class Account(models.Model):
         return f"User: {self.username}"
 
 class Customer(models.Model):
-    customer_id = models.AutoField(primary_key=True)
+    #customer_id = models.AutoField(primary_key=True)
+    customer_id = models.IntegerField(null=True, blank=True, unique=True)  # TEMP business id
     name = models.CharField(max_length=200)
     contact_person = models.CharField(max_length=100, blank=True, null=True)
     phone_no = models.CharField(max_length=20, blank=True, null=True)
@@ -28,7 +29,8 @@ class Agent(models.Model):
         return self.name
 
 class Product(models.Model):
-    product_id = models.AutoField(primary_key=True)
+    #product_id = models.AutoField(primary_key=True)
+    product_id = models.IntegerField(null=True, blank=True, unique=True)  # TEMP business id (not PK)
     product_code = models.CharField(max_length=50, unique=True)
     quantity = models.IntegerField(default=0)
     description = models.CharField(max_length=200)
@@ -131,7 +133,7 @@ class PaymentRecord(models.Model):
     
     invoice = models.ForeignKey(SalesTransaction, on_delete=models.CASCADE, related_name='payment_records')
     payment_record_no = models.CharField(max_length=50)
-    payment_date = models.DateField()
+    date = models.DateField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='cash')
     
