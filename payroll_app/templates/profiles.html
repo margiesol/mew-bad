@@ -195,7 +195,7 @@
                     <div class="d-flex align-items-center">
                         <label for="customer_code" class="form-label profile-fixed-label">Customer Code</label>
                         <input type="text" class="form-control form-control-sm profile-fixed-input" id="customer_code" name="customer_code"
-                            value="{{ request.GET.customer_code|default:next_customer_code }}" placeholder="Enter code">
+                            value="{{ request.GET.customer_code|default:next_customer_id }}" placeholder="Enter code">
                     </div>
                 </div>
                 
