@@ -26,8 +26,13 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'supplier' %}active{% endif %}" href="?tab=supplier">
-                Suppliers
+            <a class="nav-link {% if active_tab == 'agent' %}active{% endif %}" href="?tab=agent">
+                Agents
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'bank' %}active{% endif %}" href="?tab=bank">
+                Banks
             </a>
         </li>
     </ul>
@@ -40,40 +45,48 @@
         <form id="productForm" method="POST" action="{% url 'product_create' %}">
             {% csrf_token %}
             <input type="hidden" name="tab" value="product">
-            <input type="hidden" id="product_id" name="product_id" value="">
             <input type="hidden" id="is_edit_product" name="is_edit" value="false">
             <input type="hidden" id="original_product_code" name="original_product_code" value="">
             <input type="hidden" id="original_description" name="original_description" value="">
             
-            <!-- Row 1: Product Code and Description -->
+            <!-- Row 1: Product ID, Product Code and Description -->
             <div class="row g-2 mb-3">
-                <!-- Product Code -->
+                <!-- Product ID (auto-generated, read-only) -->
                 <div class="col-md-3">
                     <div class="d-flex align-items-center">
-                        <label for="product_code" class="form-label profile-fixed-label">Product Code</label>
+                        <label for="product_id" class="form-label profile-fixed-label">ID</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="product_id" name="product_id"
+                            value="{{ next_product_id }}" readonly>
+                    </div>
+                </div>
+                
+                <!-- Product Code (NOT prefilled) -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <label for="product_code" class="form-label profile-fixed-label">Code</label>
                         <input type="text" class="form-control form-control-sm profile-fixed-input" id="product_code" name="product_code"
-                            value="{{ request.GET.product_code|default:next_product_code }}" placeholder="Enter code">
+                            value="" placeholder="Enter alphanumeric code" maxlength="10">
                     </div>
                 </div>
                 
                 <!-- Description -->
-                <div class="col-md-9">
+                <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="description" class="form-label profile-fixed-label">Description</label>
                         <input type="text" class="form-control form-control-sm profile-fixed-input" id="description" name="description"
-                            value="{{ request.GET.description }}" placeholder="Enter product description">
+                            value="" placeholder="Enter product description">
                     </div>
                 </div>
             </div>
             
-            <!-- Row 2: Price, Quantity, Unit -->
+            <!-- Row 2: Price, Quantity, Status -->
             <div class="row g-2 mb-3">
                 <!-- Price -->
                 <div class="col-md-4">
                     <div class="d-flex align-items-center">
                         <label for="price" class="form-label profile-fixed-label">Price</label>
                         <input type="text" class="form-control form-control-sm text-end profile-fixed-input" id="price" name="price" 
-                            value="{{ request.GET.price }}" placeholder="0.00">
+                            value="" placeholder="0.00">
                     </div>
                 </div>
                 
@@ -82,23 +95,17 @@
                     <div class="d-flex align-items-center">
                         <label for="quantity" class="form-label profile-fixed-label">Quantity</label>
                         <input type="number" class="form-control form-control-sm text-end profile-fixed-input" id="quantity" name="quantity"
-                            value="{{ request.GET.quantity|default:0 }}" placeholder="0">
+                            value="0" min="0" max="100000" placeholder="0">
                     </div>
                 </div>
                 
-                <!-- Unit -->
+                <!-- Status (replaces Unit) -->
                 <div class="col-md-4">
                     <div class="d-flex align-items-center">
-                        <label for="unit" class="form-label profile-fixed-label">Unit</label>
-                        <select class="form-select form-select-sm profile-fixed-input" id="unit" name="unit">
-                            <option value="">Select Unit</option>
-                            <option value="PC">PC</option>
-                            <option value="PCS">PCS</option>
-                            <option value="BOX">BOX</option>
-                            <option value="SET">SET</option>
-                            <option value="KG">KG</option>
-                            <option value="LITER">LITER</option>
-                            <option value="METER">METER</option>
+                        <label for="status" class="form-label profile-fixed-label">Status</label>
+                        <select class="form-select form-select-sm profile-fixed-input" id="status" name="status">
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
                     </div>
                 </div>
@@ -123,36 +130,38 @@
     <div class="mx-auto" style="width: 80%">
         <h6 class="mb-3 text-start">Product List</h6>
     </div>
-    
+
     <div class="card mb-4 p-3 mx-auto" style="width: 80%">
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
             <table class="table mb-0" style="min-width: 800px;">
                 <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
                     <tr>
+                        <th width="80" class="text-center">ID</th>
                         <th width="100" class="text-center">Code</th>
                         <th class="text-center">Description</th>
                         <th width="150" class="text-center">Price</th>
                         <th width="120" class="text-center">Quantity</th>
-                        <th width="120" class="text-center">Unit</th>
+                        <th width="100" class="text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody id="productTableBody">
                     {% for product in products %}
-                    <tr class="product-row" data-id="{{ product.id }}" 
+                    <tr class="product-row" data-id="{{ product.product_id }}" 
                         data-code="{{ product.product_code }}"
                         data-description="{{ product.description }}"
                         data-price="{{ product.price|default:0 }}"
                         data-quantity="{{ product.quantity|default:0 }}"
-                        data-unit="{{ product.unit|default:'' }}">
-                        <td class="text-center"><strong>{{ product.product_code }}</strong></td>
+                        data-status="{{ product.status }}">
+                        <td class="text-center"><strong>{{ product.product_id }}</strong></td>
+                        <td class="text-center">{{ product.product_code }}</td>
                         <td>{{ product.description }}</td>
                         <td class="text-end">{{ product.price|floatformat:2 }}</td>
                         <td class="text-center">{{ product.quantity }}</td>
-                        <td class="text-center">{{ product.unit|default:"-" }}</td>
+                        <td class="text-center">{{ product.status }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center py-4">
+                        <td colspan="6" class="text-center py-4">
                             {% if request.GET %}
                                 No products found matching your search.
                             {% else %}
@@ -168,14 +177,14 @@
 
     <!-- Summary -->
     <div class="mx-auto text-end" style="width: 80%">
-        <strong>Total Products: {{ products.count }}</strong>
+        <strong>Total Products: {{ products|length }}</strong>
         {% if request.GET %}
             <span class="text-muted"> - Filtered results</span>
         {% endif %}
     </div>
     {% endif %}
 
-    <!-- CUSTOMERS TAB CONTENT -->
+    <!-- CUSTOMERS TAB CONTENT (EXACTLY AS YOUR WORKING CODE WITH AREA FROM VIEW) -->
     {% if active_tab == 'customer' %}
 
     <!-- Customer Search/Create/Edit Form - Single Card -->
@@ -193,9 +202,9 @@
                 <!-- Customer Code -->
                 <div class="col-md-3">
                     <div class="d-flex align-items-center">
-                        <label for="customer_code" class="form-label profile-fixed-label">Customer Code</label>
-                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="customer_code" name="customer_code"
-                            value="{{ request.GET.customer_code|default:next_customer_id }}" placeholder="Enter code">
+                        <label for="customer_id" class="form-label profile-fixed-label">ID</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="customer_id" name="customer_id"
+                            value="{{ request.GET.customer_id|default:next_customer_id }}" readonly>
                     </div>
                 </div>
                 
@@ -229,51 +238,15 @@
                     </div>
                 </div>
                 
-                <!-- Area -->
+                <!-- Area (using area_choices from view) -->
                 <div class="col-md-4">
                     <div class="d-flex align-items-center">
                         <label for="area" class="form-label profile-fixed-label">Area</label>
                         <select class="form-select form-select-sm profile-fixed-input" id="area" name="area">
                             <option value="">Select Area</option>
-                            <option value="Angeles City">Angeles City</option>
-                            <option value="Manila">Manila</option>
-                            <option value="Quezon City">Quezon City</option>
-                            <option value="Makati">Makati</option>
-                            <option value="Taguig">Taguig</option>
-                            <option value="Pasig">Pasig</option>
-                            <option value="Mandaluyong">Mandaluyong</option>
-                            <option value="Pasay">Pasay</option>
-                            <option value="Parañaque">Parañaque</option>
-                            <option value="Las Piñas">Las Piñas</option>
-                            <option value="Muntinlupa">Muntinlupa</option>
-                            <option value="Marikina">Marikina</option>
-                            <option value="Caloocan">Caloocan</option>
-                            <option value="Malabon">Malabon</option>
-                            <option value="Navotas">Navotas</option>
-                            <option value="Valenzuela">Valenzuela</option>
-                            <option value="San Juan">San Juan</option>
-                            <option value="Antipolo">Antipolo</option>
-                            <option value="Bacoor">Bacoor</option>
-                            <option value="Dasmarinas">Dasmarinas</option>
-                            <option value="Imus">Imus</option>
-                            <option value="Santa Rosa">Santa Rosa</option>
-                            <option value="Calamba">Calamba</option>
-                            <option value="Binan">Binan</option>
-                            <option value="San Pedro">San Pedro</option>
-                            <option value="Cabuyao">Cabuyao</option>
-                            <option value="Taytay">Taytay</option>
-                            <option value="Cainta">Cainta</option>
-                            <option value="Angeles">Angeles</option>
-                            <option value="San Fernando (Pampanga)">San Fernando (Pampanga)</option>
-                            <option value="Baguio">Baguio</option>
-                            <option value="Cebu City">Cebu City</option>
-                            <option value="Mandaue">Mandaue</option>
-                            <option value="Iloilo City">Iloilo City</option>
-                            <option value="Bacolod">Bacolod</option>
-                            <option value="Davao City">Davao City</option>
-                            <option value="Cagayan de Oro">Cagayan de Oro</option>
-                            <option value="Zamboanga City">Zamboanga City</option>
-                            <option value="OTHER">Other</option>
+                            {% for area_value, area_label in area_choices %}
+                            <option value="{{ area_value }}">{{ area_label }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
@@ -364,17 +337,204 @@
     </div>
     {% endif %}
 
-    <!-- SUPPLIERS TAB CONTENT -->
-    {% if active_tab == 'supplier' %}
+    <!-- AGENTS TAB CONTENT -->
+    {% if active_tab == 'agent' %}
     <div class="mx-auto" style="width: 80%">
-        <h5 class="mb-3 text-start">Suppliers</h5>
+        <h5 class="mb-3 text-start">Agents</h5>
     </div>
+
+    <!-- Agent Form -->
     <div class="card mb-4 p-3 mx-auto" style="width: 80%">
-        <h5>aw aw</h5>
+        <form id="agentForm" method="POST" action="{% url 'agent_create' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab" value="agent">
+            <input type="hidden" id="agent_id" name="agent_id" value="">
+            <input type="hidden" id="is_edit_agent" name="is_edit" value="false">
+            <input type="hidden" id="original_agent_name" name="original_name" value="">
+            
+            <!-- Single row with all fields: ID, Name, Phone -->
+            <div class="row g-2 mb-3">
+                <!-- Agent ID (auto-generated, read-only) -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <label for="agent_id_display" class="form-label profile-fixed-label">ID</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input bg-light" 
+                            id="agent_id_display" value="{{ next_agent_id }}" readonly>
+                        <input type="hidden" name="agent_id" value="{{ next_agent_id }}">
+                    </div>
+                </div>
+                
+                <!-- Agent Name -->
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center">
+                        <label for="agent_name" class="form-label profile-fixed-label">Name</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="agent_name" name="name"
+                            value="" placeholder="Last Name, First Name, MI" maxlength="100">
+                    </div>
+                </div>
+                
+                <!-- Phone -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <label for="agent_phone" class="form-label profile-fixed-label">Phone #</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="agent_phone" name="phone_no"
+                            value="" placeholder="09XX XXX XXXX" maxlength="13">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="row g-2">
+                <div class="col-md-12">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" id="clearBtnAgent" class="btn btn-sm profile-clear-btn">Clear</button>
+                        <button type="submit" id="saveBtnAgent" class="btn btn-sm profile-save-btn">Save</button>
+                        <button type="button" id="deleteBtnAgent" class="btn btn-sm profile-delete-btn" style="display: none;">Delete</button>
+                        <button type="submit" formaction="{% url 'profiles' %}?tab=agent" class="btn btn-sm profile-search-btn">Search</button>
+                        <button type="button" id="reportBtnAgent" class="btn btn-sm profile-report-btn">Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Agents Table -->
+    <div class="mx-auto" style="width: 80%">
+        <h6 class="mb-3 text-start">Agent List</h6>
+    </div>
+
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+            <table class="table mb-0" style="min-width: 600px;">
+                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                    <tr>
+                        <th width="80" class="text-center">ID</th>
+                        <th class="text-center">Name</th>
+                        <th width="150" class="text-center">Phone Number</th>
+                    </tr>
+                </thead>
+                <tbody id="agentTableBody">
+                    {% for agent in agents %}
+                    <tr class="agent-row" data-id="{{ agent.agent_id }}" 
+                        data-name="{{ agent.name }}"
+                        data-phone="{{ agent.phone_no|default:'' }}">
+                        <td class="text-center"><strong>{{ agent.agent_id }}</strong></td>
+                        <td>{{ agent.name }}</td>
+                        <td class="text-center">{{ agent.phone_no|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4">
+                            No agents found. Create your first agent above.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="mx-auto text-end" style="width: 80%">
+        <strong>Total Agents: {{ agents|length }}</strong>
+    </div>
+    {% endif %}
+
+    <!-- BANKS TAB CONTENT -->
+    {% if active_tab == 'bank' %}
+    <div class="mx-auto" style="width: 80%">
+        <h5 class="mb-3 text-start">Banks</h5>
+    </div>
+
+    <!-- Bank Form -->
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <form id="bankForm" method="POST" action="{% url 'bank_create' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab" value="bank">
+            <input type="hidden" id="bank_id" name="bank_id" value="">
+            <input type="hidden" id="is_edit_bank" name="is_edit" value="false">
+            <input type="hidden" id="original_bank_code" name="original_code" value="">
+            
+            <!-- Single row with all fields: ID, Code, Bank Name -->
+            <div class="row g-2 mb-3">                
+                <!-- Bank Code -->
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <label for="bank_code" class="form-label profile-fixed-label">Code</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="bank_code" name="bank_code"
+                            value="" placeholder="" maxlength="6">
+                    </div>
+                </div>
+                
+                <!-- Bank Name -->
+                <div class="col-md-7">
+                    <div class="d-flex align-items-center">
+                        <label for="bank_name" class="form-label profile-fixed-label">Bank Name</label>
+                        <input type="text" class="form-control form-control-sm profile-fixed-input" id="bank_name" name="name"
+                            value="" placeholder="Full bank name" maxlength="50">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="row g-2">
+                <div class="col-md-12">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" id="clearBtnBank" class="btn btn-sm profile-clear-btn">Clear</button>
+                        <button type="submit" id="saveBtnBank" class="btn btn-sm profile-save-btn">Save</button>
+                        <button type="button" id="deleteBtnBank" class="btn btn-sm profile-delete-btn" style="display: none;">Delete</button>
+                        <button type="submit" formaction="{% url 'profiles' %}?tab=bank" class="btn btn-sm profile-search-btn">Search</button>
+                        <button type="button" id="reportBtnBank" class="btn btn-sm profile-report-btn">Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Banks Table -->
+    <div class="mx-auto" style="width: 80%">
+        <h6 class="mb-3 text-start">Bank List</h6>
+    </div>
+
+    <div class="card mb-4 p-3 mx-auto" style="width: 80%">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+            <table class="table mb-0" style="min-width: 600px;">
+                <thead class="table-light" style="position: sticky; top: 0; background: white; z-index: 1;">
+                    <tr>
+                        <th width="80" class="text-center">ID</th>
+                        <th width="120" class="text-center">Acronym</th>
+                        <th class="text-center">Bank Name</th>
+                    </tr>
+                </thead>
+                <tbody id="bankTableBody">
+                    {% for bank in banks %}
+                    <tr class="bank-row" data-id="{{ bank.bank_id }}" 
+                        data-acronym="{{ bank.bank_acronym }}"
+                        data-name="{{ bank.name }}">
+                        <td class="text-center"><strong>{{ bank.bank_id }}</strong></td>
+                        <td class="text-center">{{ bank.bank_acronym }}</td>
+                        <td>{{ bank.name }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4">
+                            No banks found. Create your first bank above.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="mx-auto text-end" style="width: 80%">
+        <strong>Total Banks: {{ banks|length }}</strong>
     </div>
     {% endif %}
 </div>
 
+<!-- JAVASCRIPT (EXACTLY AS YOUR WORKING CODE) -->
 <script>
     // Check which tab is active on page load
     function checkActiveTabAndInitialize() {
@@ -387,6 +547,10 @@
             initializeProductTab();
         } else if (activeTab === 'customer') {
             initializeCustomerTab();
+        } else if (activeTab === 'agent') {
+            initializeAgentTab();
+        } else if (activeTab === 'bank') {
+            initializeBankTab();
         } else if (!activeTab) {
             // If no tab parameter, check if we're on product or customer tab by looking at form elements
             if (document.getElementById('productForm')) {
@@ -402,7 +566,6 @@
         checkActiveTabAndInitialize();
     });
     
-    // Product Tab JavaScript
     function initializeProductTab() {
         const productForm = document.getElementById('productForm');
         if (!productForm) return; // Exit if product form doesn't exist
@@ -420,7 +583,7 @@
         const descriptionInput = document.getElementById('description');
         const priceInput = document.getElementById('price');
         const quantityInput = document.getElementById('quantity');
-        const unitSelect = document.getElementById('unit');
+        const statusSelect = document.getElementById('status'); // Changed from unitSelect
         
         // Store all existing product codes and descriptions from data attributes
         const existingProductCodes = new Set();
@@ -432,41 +595,24 @@
             existingDescriptions.add(row.dataset.description.toLowerCase());
         });
         
-        // Function to get next available product code
-        function getNextAvailableProductCode() {
-            let maxCode = 0;
-            existingProductCodes.forEach(code => {
-                // Extract numeric part from code (e.g., P001 -> 1)
-                const match = code.match(/\d+/);
-                if (match) {
-                    const num = parseInt(match[0]);
-                    if (num > maxCode) maxCode = num;
-                }
-            });
-            
-            // Format next code (e.g., P002)
-            const nextNum = maxCode + 1;
-            return 'P' + nextNum.toString().padStart(3, '0');
-        }
-        
         // Double-click functionality for products
         productRows.forEach(row => {
             row.addEventListener('dblclick', function() {
                 console.log('Product row double-clicked:', this.dataset);
                 
                 // Populate form fields
+                productIdInput.value = this.dataset.id;
                 productCodeInput.value = this.dataset.code;
                 descriptionInput.value = this.dataset.description;
                 priceInput.value = this.dataset.price;
                 quantityInput.value = this.dataset.quantity;
-                unitSelect.value = this.dataset.unit;
+                statusSelect.value = this.dataset.status; // Changed from unitSelect
                 
                 // Store original values
                 originalProductCodeInput.value = this.dataset.code;
                 originalDescriptionInput.value = this.dataset.description;
                 
                 // Set hidden inputs
-                productIdInput.value = this.dataset.id;
                 isEditProductInput.value = 'true';
                 
                 // Change button text and show delete button
@@ -482,7 +628,7 @@
                     description: this.dataset.description,
                     price: this.dataset.price,
                     quantity: this.dataset.quantity,
-                    unit: this.dataset.unit
+                    status: this.dataset.status
                 });
             });
         });
@@ -496,18 +642,9 @@
                 // If user changed the code, check if it exists
                 if (currentCode !== originalCode) {
                     if (existingProductCodes.has(currentCode)) {
-                        // Code already exists, show warning and auto-correct
-                        alert('Product code already exists. Auto-correcting to next available code.');
-                        this.value = getNextAvailableProductCode();
-                        // Since code changed, this should be a new record
-                        saveBtnProduct.textContent = 'Save';
-                        deleteBtnProduct.style.display = 'none';
-                        isEditProductInput.value = 'false';
-                        productIdInput.value = '';
-                        productForm.action = "{% url 'product_create' %}";
-                    } else if (currentCode === '') {
-                        // If user clears the code, auto-fill with next available
-                        this.value = getNextAvailableProductCode();
+                        // Code already exists, show warning
+                        alert('Product code already exists. Please use a different code.');
+                        this.value = originalCode;
                     }
                 }
             }
@@ -522,7 +659,7 @@
                 // If user changed the description, check if it exists (and it's not their own original description)
                 if (currentDescription !== originalDescription && existingDescriptions.has(currentDescription) && currentDescription !== '') {
                     alert('Product description already exists. Please use a different description.');
-                    this.focus();
+                    this.value = originalDescriptionInput.value;
                 }
             }
         });
@@ -530,21 +667,16 @@
         // Clear button functionality for products
         clearBtnProduct.addEventListener('click', function() {
             productForm.reset();
-            productIdInput.value = '';
+            productIdInput.value = '{{ next_product_id }}';
             isEditProductInput.value = 'false';
             originalProductCodeInput.value = '';
             originalDescriptionInput.value = '';
             saveBtnProduct.textContent = 'Save';
             deleteBtnProduct.style.display = 'none';
+            statusSelect.value = 'Active'; // Changed from unitSelect
             
             // Reset form action to create
             productForm.action = "{% url 'product_create' %}";
-            
-            // Reset the code field to next available code
-            productCodeInput.value = getNextAvailableProductCode();
-            
-            // Reset dropdown
-            unitSelect.selectedIndex = 0;
             
             console.log('Product form cleared');
         });
@@ -579,11 +711,6 @@
             alert('Product report functionality to be implemented');
         });
         
-        // Initialize with next available code if field is empty
-        if (!productCodeInput.value) {
-            productCodeInput.value = getNextAvailableProductCode();
-        }
-        
         // Get price from URL parameters and set it
         const urlParams = new URLSearchParams(window.location.search);
         const priceParam = urlParams.get('price');
@@ -591,10 +718,10 @@
             priceInput.value = priceParam;
         }
         
-        // Get unit from URL parameters and set it
-        const unitParam = urlParams.get('unit');
-        if (unitParam) {
-            unitSelect.value = unitParam;
+        // Get status from URL parameters and set it
+        const statusParam = urlParams.get('status');
+        if (statusParam) {
+            statusSelect.value = statusParam;
         }
         
         // Debug: Log initial state
@@ -801,6 +928,160 @@
             deleteBtnDisplay: deleteBtnCustomer.style.display,
             existingCustomerCodes: Array.from(existingCustomerCodes),
             existingCompanyNames: Array.from(existingCompanyNames)
+        });
+    }
+    
+    // Agent Tab JavaScript
+    function initializeAgentTab() {
+        const agentForm = document.getElementById('agentForm');
+        if (!agentForm) return;
+        
+        const agentIdDisplay = document.getElementById('agent_id_display');
+        const agentIdInput = document.querySelector('input[name="agent_id"]');
+        const isEditAgentInput = document.getElementById('is_edit_agent');
+        const originalAgentNameInput = document.getElementById('original_agent_name');
+        const saveBtnAgent = document.getElementById('saveBtnAgent');
+        const clearBtnAgent = document.getElementById('clearBtnAgent');
+        const deleteBtnAgent = document.getElementById('deleteBtnAgent');
+        const agentRows = document.querySelectorAll('.agent-row');
+        const agentNameInput = document.getElementById('agent_name');
+        const agentPhoneInput = document.getElementById('agent_phone');
+        
+        // Double-click functionality for agents
+        agentRows.forEach(row => {
+            row.addEventListener('dblclick', function() {
+                // Populate form fields
+                agentIdDisplay.value = this.dataset.id;
+                agentIdInput.value = this.dataset.id;
+                agentNameInput.value = this.dataset.name;
+                agentPhoneInput.value = this.dataset.phone;
+                
+                // Store original values
+                originalAgentNameInput.value = this.dataset.name;
+                
+                // Set hidden inputs
+                isEditAgentInput.value = 'true';
+                
+                // Change button text and show delete button
+                saveBtnAgent.textContent = 'Update';
+                deleteBtnAgent.style.display = 'inline-block';
+                
+                // Change form action for update
+                agentForm.action = "{% url 'agent_update' 0 %}".replace('0', this.dataset.id);
+            });
+        });
+        
+        // Clear button functionality
+        clearBtnAgent.addEventListener('click', function() {
+            agentForm.reset();
+            agentIdDisplay.value = '{{ next_agent_id }}';
+            agentIdInput.value = '{{ next_agent_id }}';
+            isEditAgentInput.value = 'false';
+            originalAgentNameInput.value = '';
+            saveBtnAgent.textContent = 'Save';
+            deleteBtnAgent.style.display = 'none';
+            agentForm.action = "{% url 'agent_create' %}";
+        });
+        
+        // Delete button functionality
+        deleteBtnAgent.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this agent?')) {
+                const deleteForm = document.createElement('form');
+                deleteForm.method = 'POST';
+                deleteForm.action = "{% url 'agent_delete' 0 %}".replace('0', agentIdInput.value);
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                
+                const tabInput = document.createElement('input');
+                tabInput.type = 'hidden';
+                tabInput.name = 'tab';
+                tabInput.value = 'agent';
+                
+                deleteForm.appendChild(csrfInput);
+                deleteForm.appendChild(tabInput);
+                document.body.appendChild(deleteForm);
+                deleteForm.submit();
+            }
+        });
+    }
+    
+    // Bank Tab JavaScript
+    function initializeBankTab() {
+        const bankForm = document.getElementById('bankForm');
+        if (!bankForm) return;
+        
+        const bankIdDisplay = document.getElementById('bank_id_display');
+        const bankIdInput = document.querySelector('input[name="bank_id"]');
+        const isEditBankInput = document.getElementById('is_edit_bank');
+        const originalBankAcronymInput = document.getElementById('original_bank_acronym');
+        const saveBtnBank = document.getElementById('saveBtnBank');
+        const clearBtnBank = document.getElementById('clearBtnBank');
+        const deleteBtnBank = document.getElementById('deleteBtnBank');
+        const bankRows = document.querySelectorAll('.bank-row');
+        const bankAcronymInput = document.getElementById('bank_acronym');
+        const bankNameInput = document.getElementById('bank_name');
+        
+        // Double-click functionality for banks
+        bankRows.forEach(row => {
+            row.addEventListener('dblclick', function() {
+                // Populate form fields
+                bankIdDisplay.value = this.dataset.id;
+                bankIdInput.value = this.dataset.id;
+                bankAcronymInput.value = this.dataset.acronym;
+                bankNameInput.value = this.dataset.name;
+                
+                // Store original values
+                originalBankAcronymInput.value = this.dataset.acronym;
+                
+                // Set hidden inputs
+                isEditBankInput.value = 'true';
+                
+                // Change button text and show delete button
+                saveBtnBank.textContent = 'Update';
+                deleteBtnBank.style.display = 'inline-block';
+                
+                // Change form action for update
+                bankForm.action = "{% url 'bank_update' 0 %}".replace('0', this.dataset.id);
+            });
+        });
+        
+        // Clear button functionality
+        clearBtnBank.addEventListener('click', function() {
+            bankForm.reset();
+            bankIdDisplay.value = '{{ next_bank_id }}';
+            bankIdInput.value = '{{ next_bank_id }}';
+            isEditBankInput.value = 'false';
+            originalBankAcronymInput.value = '';
+            saveBtnBank.textContent = 'Save';
+            deleteBtnBank.style.display = 'none';
+            bankForm.action = "{% url 'bank_create' %}";
+        });
+        
+        // Delete button functionality
+        deleteBtnBank.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this bank?')) {
+                const deleteForm = document.createElement('form');
+                deleteForm.method = 'POST';
+                deleteForm.action = "{% url 'bank_delete' 0 %}".replace('0', bankIdInput.value);
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                
+                const tabInput = document.createElement('input');
+                tabInput.type = 'hidden';
+                tabInput.name = 'tab';
+                tabInput.value = 'bank';
+                
+                deleteForm.appendChild(csrfInput);
+                deleteForm.appendChild(tabInput);
+                document.body.appendChild(deleteForm);
+                deleteForm.submit();
+            }
         });
     }
 </script>

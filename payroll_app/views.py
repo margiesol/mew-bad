@@ -12,23 +12,20 @@ from datetime import datetime
 from django.core.validators import ValidationError
 
 # Helper function to generate next ID
-def generate_next_id(model_class, id_field, prefix, length):
-    """Generate next ID in format: prefix + zero-padded number"""
+def generate_next_id(model_class, id_field, length):
+    """Generate next ID as zero-padded number of specified length"""
     last_record = model_class.objects.order_by('-{}'.format(id_field)).first()
     
     if last_record:
         last_id = getattr(last_record, id_field)
         try:
-            # Extract number part (remove prefix)
-            number_part = last_id[len(prefix):]
-            next_number = int(number_part) + 1
-            next_id = f"{prefix}{next_number:0{length}d}"
+            next_number = int(last_id) + 1
+            next_id = f"{next_number:0{length}d}"
             return next_id
         except (ValueError, IndexError):
-            # If format is unexpected, start from 1
-            return f"{prefix}{1:0{length}d}"
+            return f"{1:0{length}d}"
     else:
-        return f"{prefix}{1:0{length}d}"
+        return f"{1:0{length}d}"
 
 # Login
 def home_redirect(request):
@@ -666,9 +663,8 @@ def profiles(request):
     else:
         products = products_list
     
-    # Generate next product ID and code
-    next_product_id = generate_next_id(Product, 'product_id', '', 5)
-    next_product_code = f"P{int(generate_next_id(Product, 'product_id', '', 5)):04d}"
+    # Generate next product ID (just numbers, 5 digits)
+    next_product_id = generate_next_id(Product, 'product_id', 5)
     
     # CUSTOMER LOGIC
     customers_qs = Customer.objects.all()
@@ -693,8 +689,8 @@ def profiles(request):
     
     customers = customers_qs.order_by('name')
     
-    # Generate next customer ID
-    next_customer_id = generate_next_id(Customer, 'customer_id', '', 4)
+    # Generate next customer ID (4 digits)
+    next_customer_id = generate_next_id(Customer, 'customer_id', 4)
     
     # AGENT LOGIC
     agents_qs = Agent.objects.all()
@@ -711,8 +707,8 @@ def profiles(request):
     
     agents = agents_qs.order_by('name')
     
-    # Generate next agent ID
-    next_agent_id = generate_next_id(Agent, 'agent_id', '', 4)
+    # Generate next agent ID (4 digits)
+    next_agent_id = generate_next_id(Agent, 'agent_id', 4)
     
     # BANK LOGIC
     banks_qs = Bank.objects.all()
@@ -729,8 +725,8 @@ def profiles(request):
     
     banks = banks_qs.order_by('name')
     
-    # Generate next bank ID
-    next_bank_id = generate_next_id(Bank, 'bank_id', '', 4)
+    # Generate next bank ID (4 digits)
+    next_bank_id = generate_next_id(Bank, 'bank_id', 4)
     
     # Area choices for customer
     area_choices = Customer.AREA_CHOICES
@@ -738,21 +734,20 @@ def profiles(request):
     context = {
         # Products
         'products': products,
-        'next_product_id': next_product_id,
-        'next_product_code': next_product_code,
+        'next_product_id': next_product_id,  # This will be like '00001'
         
         # Customers
         'customers': customers,
-        'next_customer_id': next_customer_id,
+        'next_customer_id': next_customer_id,  # This will be like '0001'
         'area_choices': area_choices,
         
         # Agents
         'agents': agents,
-        'next_agent_id': next_agent_id,
+        'next_agent_id': next_agent_id,  # This will be like '0001'
         
         # Banks
         'banks': banks,
-        'next_bank_id': next_bank_id,
+        'next_bank_id': next_bank_id,  # This will be like '0001'
         
         # Active tab
         'active_tab': active_tab,
@@ -768,8 +763,8 @@ def product_create(request):
     
     if request.method == 'POST':
         try:
-            product_id = request.POST.get('product_id')
-            product_code = request.POST.get('product_code')
+            product_id = request.POST.get('product_id')  # Will be like '00001'
+            product_code = request.POST.get('product_code')  # Alphanumeric code
             description = request.POST.get('description')
             price = float(request.POST.get('price', 0))
             quantity = int(request.POST.get('quantity', 0))
