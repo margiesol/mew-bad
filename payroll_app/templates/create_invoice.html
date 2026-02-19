@@ -2,15 +2,7 @@
 {% load static %}
 
 {% block content %}
-<nav class="navbar navbar-dark mb-3" style="background-color: #590404;">
-    <div class="d-flex align-items-center px-3" style="gap: 20px;">
-        <span class="navbar-brand">AstovC</span>
-        <a class="navbar-brand" href="{% url 'main_page' %}"><small>Invoice List</small></a>
-        <a class="navbar-brand" href="{% url 'create_invoice' %}"><small>Create Invoice</small></a>
-        <a class="navbar-brand" href="{% url 'profiles' %}"><small>Profiles</small></a>
-    </div>
-    <a class="navbar-brand" href="?logout=true"><small>Logout</small></a>     
-</nav>
+
 
 <div class="container" style="max-width: 1400px;">
     <ul class="nav nav-tabs mb-4">

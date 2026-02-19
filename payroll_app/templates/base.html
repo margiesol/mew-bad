@@ -1,40 +1,180 @@
 {% load static %}
 
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>MEW System</title>
-        <link rel="stylesheet" href="{% static '/bootstrap/css/bootstrap.min.css' %}">
-        <link rel="stylesheet" href="{% static '/bootstrap/css/custom.css' %}">
-        <link rel="stylesheet" href="{% static '/css/style.css' %}">
-    </head>
+<head>
+    <title>MEW System</title>
+
+    <link rel="stylesheet" href="{% static '/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static '/bootstrap/css/custom.css' %}">
+    <link rel="stylesheet" href="{% static '/css/style.css' %}">
+
     <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-    }
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
 
-    body {
-        display: flex;
-        flex-direction: column;
-    }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
 
-    .container {
-        flex: 1;
-        padding-bottom: 50px; 
-    }
+        main {
+            flex: 1;
+            padding: 20px;
+        }
 
-    .footer {
-        width: 100%;
-        text-align: center;
-        margin-top: auto;
-        color: white;
-    }
+        /* ================= SIDEBAR ================= */
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -260px;
+            width: 250px;
+            height: 100%;
+            background-color: #6c757d; /* Gray */
+            color: white;
+            transition: left 0.3s ease;
+            z-index: 1050;
+            padding-top: 20px;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px 16px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .sidebar-link {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 12px 16px;
+            font-size: 15px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* ================= TOGGLE BUTTON ================= */
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            z-index: 1051;
+            background-color: #6c757d;
+            border: none;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 18px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            cursor: pointer;
+        }
+
+        .sidebar-toggle:hover {
+            opacity: 0.9;
+        }
+
+        /* ================= OVERLAY ================= */
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(0,0,0,0.35);
+            z-index: 1049;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
     </style>
+</head>
 
-    <body>
-        <main>
-            {% block content %}
-            {% endblock %}
-        </main>
-    </body>
+<body>
+
+    <!-- Toggle Arrow -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        ▶
+    </button>
+
+    <!-- Dark overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+        <div class="sidebar-header">
+            <div class="sidebar-title">MEW</div>
+            <button class="btn-close btn-close-white" id="closeSidebar"></button>
+        </div>
+
+        <a class="sidebar-link" href="{% url 'main_page' %}">Invoice List</a>
+        <a class="sidebar-link" href="{% url 'create_invoice' %}">Create Invoice</a>
+        <a class="sidebar-link" href="{% url 'profiles' %}">Profiles</a>
+
+        <hr style="border-color: rgba(255,255,255,0.3);">
+
+        <a class="sidebar-link text-warning" href="?logout=true">Logout</a>
+    </div>
+
+    <!-- Page Content -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Sidebar Script -->
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("overlay");
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const closeBtn = document.getElementById("closeSidebar");
+
+        function openSidebar() {
+            sidebar.classList.add("active");
+            overlay.classList.add("active");
+            toggleBtn.innerHTML = "◀";
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove("active");
+            overlay.classList.remove("active");
+            toggleBtn.innerHTML = "▶";
+        }
+
+        toggleBtn.addEventListener("click", function () {
+            if (sidebar.classList.contains("active")) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        closeBtn.addEventListener("click", closeSidebar);
+        overlay.addEventListener("click", closeSidebar);
+    </script>
+
+</body>
 </html>
