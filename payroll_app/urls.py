@@ -1,65 +1,37 @@
-"""
-URL configuration for MyInventorySystem project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.urls import path
-from django.contrib import admin
 from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', views.home_redirect, name="home"),
-    path('signup/', views.signup_view, name='signup'),
-    path('manage_account/<int:pk>/', views.manage_account, name='manage_account'),
-    path('delete_account/<int:pk>/', views.delete_account, name='delete_account'),
-    path('change_password/<int:pk>/', views.change_password, name='change_password'),
-    path('main_page/', views.main_page, name='main_page'),
+    # Home / main
+    path("", views.home_redirect, name="home_redirect"),
+    path("main/", views.main_page, name="main_page"),
 
-    # Profiles and CRUD operations
-    path('profiles/', views.profiles, name='profiles'),
-    
-    # Product URLs
-    path('product/create/', views.product_create, name='product_create'),
-    path('product/<str:pk>/update/', views.product_update, name='product_update'),
-    path('product/<str:pk>/delete/', views.product_delete, name='product_delete'),
-    
-    # Customer URLs
-    path('customer/create/', views.customer_create, name='customer_create'),
-    path('customer/<str:pk>/update/', views.customer_update, name='customer_update'),
-    path('customer/<str:pk>/delete/', views.customer_delete, name='customer_delete'),
-    
-    # Agent URLs (NEW)
-    path('agent/create/', views.agent_create, name='agent_create'),
-    path('agent/<str:pk>/update/', views.agent_update, name='agent_update'),
-    path('agent/<str:pk>/delete/', views.agent_delete, name='agent_delete'),
-    
-    # Bank URLs (NEW)
-    path('bank/create/', views.bank_create, name='bank_create'),
-    path('bank/<str:pk>/update/', views.bank_update, name='bank_update'),
-    path('bank/<str:pk>/delete/', views.bank_delete, name='bank_delete'),
-    
-    # Invoice URLs
-    path('create_invoice/', views.create_invoice, name='create_invoice'),
-    path('sales_invoice/create/', views.sales_invoice_create, name='sales_invoice_create'),
-    path('sales_invoice/<str:invoice_id>/print/', views.sales_invoice_print, name='sales_invoice_print'),
-    path('sales_invoice/<str:invoice_id>/details/', views.sales_invoice_details, name='sales_invoice_details'),
-    
-    # REMOVED: supplier and purchase invoice URLs (not in your models)
-    # path('supplier/create/', views.supplier_create, name='supplier_create'),
-    # path('supplier/<int:pk>/update/', views.supplier_update, name='supplier_update'),
-    # path('supplier/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
-    # path('purchase_invoice/create/', views.purchase_invoice_create, name='purchase_invoice_create'),
-    # path('purchase_invoice/<int:pk>/print/', views.purchase_invoice_print, name='purchase_invoice_print'),
+    # Invoices (these fix your base.html links)
+    path("create_invoice/", views.create_invoice, name="create_invoice"),
+    path("sales_invoice/create/", views.sales_invoice_create, name="sales_invoice_create"),
+    path("sales_invoice/<str:invoice_id>/print/", views.sales_invoice_print, name="sales_invoice_print"),
+    path("sales_invoice/<str:invoice_id>/details/", views.sales_invoice_details, name="sales_invoice_details"),
+
+    # Profiles
+    path("profiles/", views.profiles, name="profiles"),
+
+    # Products
+    path("profiles/product/create/", views.product_create, name="product_create"),
+    path("profiles/product/<str:pk>/update/", views.product_update, name="product_update"),
+    path("profiles/product/<str:pk>/delete/", views.product_delete, name="product_delete"),
+
+    # Customers
+    path("profiles/customer/create/", views.customer_create, name="customer_create"),
+    path("profiles/customer/<str:pk>/update/", views.customer_update, name="customer_update"),
+    path("profiles/customer/<str:pk>/delete/", views.customer_delete, name="customer_delete"),
+
+    # Agents
+    path("profiles/agent/create/", views.agent_create, name="agent_create"),
+    path("profiles/agent/<str:pk>/update/", views.agent_update, name="agent_update"),
+    path("profiles/agent/<str:pk>/delete/", views.agent_delete, name="agent_delete"),
+
+    # Banks
+    path("profiles/bank/create/", views.bank_create, name="bank_create"),
+    path("profiles/bank/<str:pk>/update/", views.bank_update, name="bank_update"),
+    path("profiles/bank/<str:pk>/delete/", views.bank_delete, name="bank_delete"),
 ]

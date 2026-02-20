@@ -112,7 +112,7 @@
 </head>
 
 <body>
-
+    {% if request.session.user_id %}
     <!-- Toggle Arrow -->
     <button class="sidebar-toggle" id="sidebarToggle">
         ▶
@@ -137,7 +137,7 @@
 
         <a class="sidebar-link text-warning" href="?logout=true">Logout</a>
     </div>
-
+    {% endif %}
     <!-- Page Content -->
     <main>
         {% block content %}
