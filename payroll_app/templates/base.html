@@ -3,177 +3,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MEW System</title>
-
-    <link rel="stylesheet" href="{% static '/bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static '/css/style.css' %}">
-
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
-
-        body {
-            display: flex;
-            flex-direction: column;
-        }
-
-        main {
-            flex: 1;
-            padding: 20px;
-        }
-
-        /* ================= SIDEBAR ================= */
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -260px;
-            width: 250px;
-            height: 100%;
-            background-color: #6c757d; /* Gray */
-            color: white;
-            transition: left 0.3s ease;
-            z-index: 1050;
-            padding-top: 20px;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 16px 16px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .sidebar-title {
-            font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin: 0;
-        }
-
-        .sidebar-link {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 12px 16px;
-            font-size: 15px;
-        }
-
-        .sidebar-link:hover {
-            background: rgba(255,255,255,0.15);
-        }
-
-        /* ================= TOGGLE BUTTON ================= */
-
-        .sidebar-toggle {
-            position: fixed;
-            top: 50%;
-            left: 10px;
-            transform: translateY(-50%);
-            z-index: 1051;
-            background-color: #6c757d;
-            border: none;
-            color: white;
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 18px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-            cursor: pointer;
-        }
-
-        .sidebar-toggle:hover {
-            opacity: 0.9;
-        }
-
-        /* ================= OVERLAY ================= */
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background: rgba(0,0,0,0.35);
-            z-index: 1049;
-            display: none;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-    </style>
+	<title>MEW System</title>
+	<link rel="stylesheet" href="{% static '/css/style.css' %}">
 </head>
 
 <body>
-    {% if request.session.user_id %}
-    <!-- Toggle Arrow -->
-    <button class="sidebar-toggle" id="sidebarToggle">
-        ▶
-    </button>
+	{% if request.session.user_id %}
+		<!-- Top header bar (hamburger sits beside tabs in the same row) -->
+		<header class="topbar">
+			<button class="hamburger" id="sidebarToggle" type="button" aria-label="Open menu" aria-expanded="false">
+				<span></span><span></span><span></span>
+			</button>
+			{% block header_tabs %}{% endblock %}
+		</header>
 
-    <!-- Dark overlay -->
-    <div class="overlay" id="overlay"></div>
+		<!-- Dark overlay -->
+		<div class="overlay" id="overlay"></div>
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+		<!-- Sidebar -->
+		<aside class="sidebar" id="sidebar" aria-hidden="true">
+			<div class="sidebar-header">
+				<div class="sidebar-title">MEW</div>
+				<button class="sidebar-close" id="closeSidebar" type="button" aria-label="Close">✕</button>
+			</div>
 
-        <div class="sidebar-header">
-            <div class="sidebar-title">MEW</div>
-            <button class="btn-close btn-close-white" id="closeSidebar"></button>
-        </div>
+			<a class="sidebar-link" href="{% url 'main_page' %}">Invoice List</a>
+			<a class="sidebar-link" href="{% url 'create_invoice' %}">Create Invoice</a>
+			<a class="sidebar-link" href="{% url 'profiles' %}">Profiles</a>
 
-        <a class="sidebar-link" href="{% url 'main_page' %}">Invoice List</a>
-        <a class="sidebar-link" href="{% url 'create_invoice' %}">Create Invoice</a>
-        <a class="sidebar-link" href="{% url 'profiles' %}">Profiles</a>
+			<hr style="border-color: rgba(255,255,255,0.3);">
 
-        <hr style="border-color: rgba(255,255,255,0.3);">
+			<a class="sidebar-link" href="?logout=true" style="color:#ffc107;">Logout</a>
+		</aside>
+	{% endif %}
 
-        <a class="sidebar-link text-warning" href="?logout=true">Logout</a>
-    </div>
-    {% endif %}
-    <!-- Page Content -->
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+	<!-- Page Content -->
+	<main>
+		{% block content %}{% endblock %}
+	</main>
 
-    <!-- Sidebar Script -->
-    <script>
-        const sidebar = document.getElementById("sidebar");
-        const overlay = document.getElementById("overlay");
-        const toggleBtn = document.getElementById("sidebarToggle");
-        const closeBtn = document.getElementById("closeSidebar");
+	<!-- Sidebar Script -->
+	<script>
+		(function () {
+			const sidebar = document.getElementById("sidebar");
+			const overlay = document.getElementById("overlay");
+			const toggleBtn = document.getElementById("sidebarToggle");
+			const closeBtn = document.getElementById("closeSidebar");
 
-        function openSidebar() {
-            sidebar.classList.add("active");
-            overlay.classList.add("active");
-            toggleBtn.innerHTML = "◀";
-        }
+			if (!sidebar || !overlay || !toggleBtn) return;
 
-        function closeSidebar() {
-            sidebar.classList.remove("active");
-            overlay.classList.remove("active");
-            toggleBtn.innerHTML = "▶";
-        }
+			function openSidebar() {
+				sidebar.classList.add("active");
+				overlay.classList.add("active");
+				toggleBtn.setAttribute("aria-expanded", "true");
+				sidebar.setAttribute("aria-hidden", "false");
+			}
 
-        toggleBtn.addEventListener("click", function () {
-            if (sidebar.classList.contains("active")) {
-                closeSidebar();
-            } else {
-                openSidebar();
-            }
-        });
+			function closeSidebar() {
+				sidebar.classList.remove("active");
+				overlay.classList.remove("active");
+				toggleBtn.setAttribute("aria-expanded", "false");
+				sidebar.setAttribute("aria-hidden", "true");
+			}
 
-        closeBtn.addEventListener("click", closeSidebar);
-        overlay.addEventListener("click", closeSidebar);
-    </script>
+			toggleBtn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				if (sidebar.classList.contains("active")) closeSidebar();
+				else openSidebar();
+			});
 
+			closeBtn && closeBtn.addEventListener("click", closeSidebar);
+			overlay.addEventListener("click", closeSidebar);
+
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Escape") closeSidebar();
+			});
+		})();
+	</script>
 </body>
 </html>
