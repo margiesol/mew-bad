@@ -20,7 +20,7 @@
 
 		<div class="pf-card">
 			<form id="productForm" method="POST" action="{% url 'product_create' %}" novalidate>
-				{% csrf_token %}
+		    {% csrf_token %}
 				<input type="hidden" id="product_pk" value="">
 				<input type="hidden" id="product_mode" value="create">
 				<input type="hidden" id="product_id" value="{{ next_product_id }}">
@@ -29,21 +29,21 @@
 
 					<!-- LEFT: Code + Quantity/Price -->
 					<div>
-						<div class="pf-field">
+				    <div class="pf-field" style="grid-template-columns: 60px 1fr;">
 							<label class="pf-label" for="product_code">Code</label>
-							<div>
+							<div style="position:relative;">
 								<div class="help-err" id="product_code_err"></div>
 								<input type="text" class="pf-input" id="product_code" name="product_code" value="{{ request.GET.product_code|default:'' }}" placeholder="Product Code">
 							</div>
 						</div>
 
-						<div class="pf-field-inline">
+						<div class="pf-field-inline" style="grid-template-columns: 60px 130px 50px 1fr;">
 							<label class="pf-label" for="quantity">Quantity</label>
-							<div>
+							<div style="position:relative;">
 								<div class="help-err" id="product_quantity_err"></div>
                                 <input type="number" class="pf-input" id="quantity" name="quantity" value="{{ request.GET.quantity|default:'0' }}" min="0" max="100000" step="1" placeholder="Stock Amount">							</div>
 							<label class="pf-label-inline" for="price">Price</label>
-							<div>
+							<div style="position:relative;">
 								<div class="help-err" id="product_price_err"></div>
 								<input type="text" class="pf-input" id="price" name="price" value="{{ request.GET.price|default:'' }}" inputmode="decimal" autocomplete="off" placeholder="Unit Price">
 							</div>
@@ -52,17 +52,17 @@
 
 					<!-- RIGHT: Description + Status + Buttons -->
 					<div>
-						<div class="pf-field">
+						<div class="pf-field" style="grid-template-columns: 75px 1fr;">
 							<label class="pf-label" for="description">Description</label>
-							<div>
+							<div style="position:relative;">
 								<div class="help-err" id="product_description_err"></div>
 								<input type="text" class="pf-input" id="description" name="description" value="{{ request.GET.description|default:'' }}" maxlength="150" autocomplete="off" placeholder="Product Name">
 							</div>
 						</div>
 
-						<div class="pf-field">
+						<div class="pf-field" style="grid-template-columns: 75px 1fr;">
 							<label class="pf-label" for="status">Status</label>
-							<div>
+							<div style="position:relative;">
                                 <div class="help-err" id="product_status_err"></div>
 								<select class="pf-select pf-select-status" id="status" name="status">
                                     <option value="" {% if not request.GET.status %}selected{% endif %}>Select Status</option>
@@ -137,17 +137,17 @@
 				<input type="hidden" id="customer_mode" value="create">
 
 				<!-- ROW 1: Customer ID + Name -->
-				<div class="pf-form-cols" style="margin-bottom:16px;">
-					<div class="pf-field" style="margin-bottom:0;">
+				<div class="pf-row-3" style="margin-bottom:16px;">
+					<div class="pf-field" style="margin-bottom:0; grid-template-columns: 100px 1fr;">
 						<label class="pf-label" for="customer_id">Customer ID</label>
-						<div>
+						<div style="position:relative;">
 							<div class="search-hint" id="customer_id_mode_msg"></div>
 							<input type="text" class="pf-input" id="customer_id" name="customer_id" value="{% if request.GET.customer_id %}{{ request.GET.customer_id }}{% elif request.GET.name or request.GET.contact_person or request.GET.phone_no or request.GET.area or request.GET.address %}{% else %}{{ next_customer_id }}{% endif %}">
 						</div>
 					</div>
-					<div class="pf-field" style="margin-bottom:0;">
+					<div class="pf-field" style="margin-bottom:0; grid-column: span 2;">
 						<label class="pf-label" for="customer_name">Name</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="customer_name_err"></div>
 							<input type="text" class="pf-input" id="customer_name" name="name" value="{{ request.GET.name|default:'' }}" maxlength="50" autocomplete="off" placeholder="Company or Full Name">
 						</div>
@@ -156,23 +156,23 @@
 
 				<!-- ROW 2: Contact Person + Phone No. + Area (3 across) -->
 				<div class="pf-row-3">
-					<div class="pf-field">
+					<div class="pf-field" style="grid-template-columns: 100px 1fr;">
 						<label class="pf-label" for="contact_person">Contact Person</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="contact_person_err"></div>
 							<input type="text" class="pf-input" id="contact_person" name="contact_person" value="{{ request.GET.contact_person|default:'' }}" maxlength="50" autocomplete="off" placeholder="LAST NAME, First Name, M.I.">
 						</div>
 					</div>
 					<div class="pf-field">
 						<label class="pf-label" for="customer_phone">Phone No.</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="customer_phone_err"></div>
 							<input type="text" class="pf-input" id="customer_phone" name="phone_no" value="{{ request.GET.phone_no|default:'' }}" maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
 						</div>
 					</div>
-					<div class="pf-field">
+					<div class="pf-field" style="grid-template-columns: 35px 1fr;">
 						<label class="pf-label" for="area">Area</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="customer_area_err"></div>
 							<select class="pf-select" id="area" name="area">
 								{% for value, label in area_choices %}
@@ -187,7 +187,7 @@
 				<div class="pf-row-full">
 					<div class="pf-field" style="grid-template-columns: 100px 1fr;">
 						<label class="pf-label" for="customer_address">Address</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="customer_address_err"></div>
 							<input type="text" class="pf-input" id="customer_address" name="address" value="{{ request.GET.address|default:'' }}" maxlength="150" autocomplete="off" placeholder="Full address">
 						</div>
@@ -252,24 +252,24 @@
 				<input type="hidden" id="agent_mode" value="create">
 
 				<!-- Single row: ID + Name + Phone No. -->
-				<div style="display:grid; grid-template-columns:1fr 2fr 1.5fr; gap:0 20px; margin-bottom:16px; align-items:start;">
-					<div class="pf-field" style="margin-bottom:0;">
+				<div style="display:grid; grid-template-columns:1fr 2.5fr 1.5fr; gap:0 20px; margin-bottom:16px; align-items:start;">
+					<div class="pf-field" style="margin-bottom:0; grid-template-columns: 20px 1fr;">
 						<label class="pf-label" for="agent_id">ID</label>
-						<div>
+						<div style="position:relative;">
 							<div class="search-hint" id="agent_id_mode_msg"></div>
 							<input type="text" class="pf-input" id="agent_id" name="agent_id" value="{% if request.GET.agent_id %}{{ request.GET.agent_id }}{% elif request.GET.name or request.GET.phone_no %}{% else %}{{ next_agent_id }}{% endif %}">
 						</div>
 					</div>
 					<div class="pf-field" style="margin-bottom:0;">
 						<label class="pf-label" for="agent_name">Name</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="agent_name_err"></div>
 							<input type="text" class="pf-input" id="agent_name" name="name" value="{{ request.GET.name|default:'' }}" maxlength="100" autocomplete="off" placeholder="LAST NAME, First Name, M.I.">
 						</div>
 					</div>
 					<div class="pf-field" style="margin-bottom:0;">
 						<label class="pf-label" for="agent_phone">Phone No.</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="agent_phone_err"></div>
 							<input type="text" class="pf-input" id="agent_phone" name="phone_no" value="{{ request.GET.phone_no|default:'' }}" maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
 						</div>
@@ -328,17 +328,17 @@
 				<input type="hidden" id="bank_mode" value="create">
 
 				<!-- Single row: Acronym + Bank Name -->
-				<div style="display:grid; grid-template-columns:1fr 2fr; gap:0 20px; margin-bottom:16px; align-items:start;">
-					<div class="pf-field" style="margin-bottom:0;">
+				<div style="display:grid; grid-template-columns:0.5fr 1fr; gap:0 20px; margin-bottom:16px; align-items:start;">
+					<div class="pf-field" style="margin-bottom:0; grid-template-columns: 55px 0.8fr;">
 						<label class="pf-label" for="bank_acronym">Acronym</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="bank_acronym_err"></div>
 							<input type="text" class="pf-input" id="bank_acronym" name="bank_acronym" value="{{ request.GET.bank_acronym|default:'' }}" maxlength="6" autocomplete="off" placeholder="e.g. BDO">
 						</div>
 					</div>
 					<div class="pf-field" style="margin-bottom:0;">
 						<label class="pf-label" for="bank_name">Bank Name</label>
-						<div>
+						<div style="position:relative;">
 							<div class="help-err" id="bank_name_err"></div>
 							<input type="text" class="pf-input" id="bank_name" name="name" value="{{ request.GET.name|default:'' }}" maxlength="50" autocomplete="off" placeholder="Full bank name">
 						</div>

@@ -54,7 +54,7 @@ def change_password(request, pk):
 
 
 def create_invoice(request):
-    return HttpResponse("Create Invoice placeholder")
+    return render(request, 'invoice.html')
 
 
 def sales_invoice_create(request):
