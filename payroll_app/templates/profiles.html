@@ -3,1030 +3,889 @@
 
 {% block header_tabs %}
 <div class="tabs">
-	<a class="tab {% if active_tab == 'product' %}active{% endif %}" href="?tab=product">Products</a>
-	<a class="tab {% if active_tab == 'customer' %}active{% endif %}" href="?tab=customer">Customers</a>
-	<a class="tab {% if active_tab == 'agent' %}active{% endif %}" href="?tab=agent">Agents</a>
-	<a class="tab {% if active_tab == 'bank' %}active{% endif %}" href="?tab=bank">Banks</a>
+  <a class="tab {% if active_tab == 'product' %}active{% endif %}"  href="?tab=product">Products</a>
+  <a class="tab {% if active_tab == 'customer' %}active{% endif %}" href="?tab=customer">Customers</a>
+  <a class="tab {% if active_tab == 'agent' %}active{% endif %}"    href="?tab=agent">Agents</a>
+  <a class="tab {% if active_tab == 'bank' %}active{% endif %}"     href="?tab=bank">Banks</a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="containerx">
-    {# ========================= PRODUCTS ========================= #}
-    {% if active_tab == 'product' %}
-    <div class="cardx">
-        <form id="productForm" method="POST" action="{% url 'product_create' %}" novalidate>
-            {% csrf_token %}
-            <input type="hidden" id="product_pk" value="">
-            <input type="hidden" id="product_mode" value="create">
+<div class="page-wrap">
 
-            <div class="grid grid-3">
-                <div class="field">
-                    <label class="label">ID</label>
-                    <input type="text" class="input" id="product_id" value="{{ next_product_id }}" readonly>
-                </div>
+  {# ==================== PRODUCTS ==================== #}
+  {% if active_tab == 'product' %}
 
-                <div class="field">
-                    <label class="label">Code</label>
-                    <div>
-                        <div class="help-err" id="product_code_err"></div>
-                        <input type="text" class="input" id="product_code" name="product_code" maxlength="10" autocomplete="off">
-                    </div>
-                </div>
+  <h1 class="page-title">Product Profile</h1>
 
-                <div class="field">
-                    <label class="label">Description</label>
-                    <div>
-                        <div class="help-err" id="product_description_err"></div>
-                        <input type="text" class="input" id="description" name="description" maxlength="150" autocomplete="off">
-                    </div>
-                </div>
+  <div class="pf-card">
+    <form id="productForm" method="POST" action="{% url 'product_create' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" id="product_pk"   value="">
+      <input type="hidden" id="product_mode" value="create">
+      <input type="hidden" id="product_id"   value="{{ next_product_id }}">
+      
+
+      <div class="pf-form-cols">
+
+        <!-- LEFT: Code + Quantity/Price -->
+        <div>
+          <div class="pf-field">
+            <label class="pf-label" for="product_code">Code</label>
+            <div>
+              <div class="help-err" id="product_code_err"></div>
+              <input type="text" class="pf-input" id="product_code" name="product_code"
+                     value="{{ next_product_id }}" readonly>
             </div>
+          </div>
 
-            <div class="grid grid-3-even">
-                <div class="field">
-                    <label class="label">Price</label>
-                    <div>
-                        <div class="help-err" id="product_price_err"></div>
-                        <input type="text" class="input t-right" id="price" name="price" inputmode="decimal" autocomplete="off" placeholder="0.00">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label">Quantity</label>
-                    <div>
-                        <div class="help-err" id="product_quantity_err"></div>
-                        <input type="number" class="input t-right" id="quantity" name="quantity" value="0" min="0" max="100000" step="1">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label">Status</label>
-                    <select class="select" id="status" name="status">
-                        <option value="Active" selected>Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                </div>
+          <div class="pf-field-inline">
+            <label class="pf-label" for="quantity">Quantity</label>
+            <div>
+              <div class="help-err" id="product_quantity_err"></div>
+              <input type="number" class="pf-input" id="quantity" name="quantity"
+                     value="0" min="0" max="100000" step="1" placeholder="Stock Amount">
             </div>
-
-            <div class="actions">
-                <button type="button" id="clearBtnProduct" class="btnx btn-light">Clear</button>
-                <button type="submit" id="saveBtnProduct" class="btnx btn-primary">Save</button>
-                <button type="button" id="deleteBtnProduct" class="btnx btn-danger" disabled>Delete</button>
-                <a class="btnx btn-secondary" href="{% url 'profiles' %}?tab=product">Search</a>
+            <label class="pf-label-inline" for="price">Price</label>
+            <div>
+              <div class="help-err" id="product_price_err"></div>
+              <input type="text" class="pf-input" id="price" name="price"
+                     inputmode="decimal" autocomplete="off" placeholder="Unit Price">
             </div>
-        </form>
-    </div>
-
-    <div class="cardx">
-        <div class="table-wrap">
-            <table class="tablex">
-                <thead>
-                    <tr>
-                        <th class="t-center" style="width:90px;">ID</th>
-                        <th class="t-center" style="width:120px;">Code</th>
-                        <th class="t-center">Description</th>
-                        <th class="t-center" style="width:140px;">Price</th>
-                        <th class="t-center" style="width:120px;">Quantity</th>
-                        <th class="t-center" style="width:110px;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr class="product-row" title="Click row to edit"
-                        data-id="{{ product.product_id }}"
-                        data-code="{{ product.product_code }}"
-                        data-description="{{ product.description }}"
-                        data-price="{{ product.price }}"
-                        data-quantity="{{ product.quantity }}"
-                        data-status="{{ product.status }}">
-                    <td class="t-center"><span class="strong">{{ product.product_id }}</span></td>
-                    <td class="t-center">{{ product.product_code }}</td>
-                    <td>{{ product.description }}</td>
-                    <td class="t-right">{{ product.price|floatformat:2 }}</td>
-                    <td class="t-center">{{ product.quantity }}</td>
-                    <td class="t-center">{{ product.status }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="t-center" style="padding:1.25rem;">No products found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+          </div>
         </div>
-    </div>
-    {% endif %}
 
-    {# ========================= CUSTOMERS ========================= #}
-    {% if active_tab == 'customer' %}
-    <div class="cardx">
-        <form id="customerForm" method="POST" action="{% url 'customer_create' %}" novalidate>
-            {% csrf_token %}
-            <input type="hidden" id="customer_pk" value="">
-            <input type="hidden" id="customer_mode" value="create">
-            <div class="grid grid-3">
-                <div class="field">
-                    <label class="label">ID</label>
-                    <input type="text" class="input" id="customer_id" value="{{ next_customer_id }}" readonly>
-                </div>
-
-                <div class="field" style="grid-column: span 2;">
-                    <label class="label">Name</label>
-                    <div>
-                        <div class="help-err" id="customer_name_err"></div>
-                        <input type="text" class="input" id="customer_name" name="name" maxlength="50" autocomplete="off">
-                    </div>
-                </div>
+        <!-- RIGHT: Description + Status + Buttons -->
+        <div>
+          <div class="pf-field">
+            <label class="pf-label" for="description">Description</label>
+            <div>
+              <div class="help-err" id="product_description_err"></div>
+              <input type="text" class="pf-input" id="description" name="description"
+                     maxlength="150" autocomplete="off" placeholder="Product Name">
             </div>
+          </div>
 
-            <div class="grid grid-3-even" style="margin-top:1rem;">
-                <div class="field">
-                    <label class="label">Contact Person</label>
-                    <div>
-                        <div class="help-err" id="contact_person_err"></div>
-                        <input type="text" class="input" id="contact_person" name="contact_person" maxlength="50" autocomplete="off" placeholder="LAST NAME, First Name, M.i.">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label">Phone #</label>
-                    <div>
-                        <div class="help-err" id="customer_phone_err"></div>
-                        <input type="text" class="input" id="customer_phone" name="phone_no" maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label">Area</label>
-                    <div>
-                        <div class="help-err" id="customer_area_err"></div>
-                        <select class="select" id="area" name="area">
-                            {% for value, label in area_choices %}
-                            <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+          <div class="pf-field">
+            <label class="pf-label" for="status">Status</label>
+            <div>
+              <select class="pf-select pf-select-status" id="status" name="status">
+                <option value="" selected>Select Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
             </div>
+          </div>
 
-            <div class="grid grid-1" style="margin-top:1rem;">
-                <div class="field">
-                    <label class="label">Address</label>
-                    <div>
-                        <div class="help-err" id="customer_address_err"></div>
-                        <input type="text" class="input" id="customer_address" name="address" maxlength="150" autocomplete="off">
-                    </div>
-                </div>
-            </div>
-
-            <div class="actions">
-                <button type="button" id="clearBtnCustomer" class="btnx btn-light">Clear</button>
-                <button type="submit" id="saveBtnCustomer" class="btnx btn-primary">Save</button>
-                <button type="button" id="deleteBtnCustomer" class="btnx btn-danger" disabled>Delete</button>
-                <a class="btnx btn-secondary" href="{% url 'profiles' %}?tab=customer">Search</a>
-            </div>
-        </form>
-    </div>
-
-    <div class="cardx">
-        <div class="table-wrap">
-            <table class="tablex" style="min-width:900px;">
-                <thead>
-                    <tr>
-                    <th class="t-center" style="width:90px;">ID</th>
-                    <th class="t-center">Name</th>
-                    <th class="t-center">Contact Person</th>
-                    <th class="t-center" style="width:170px;">Phone Number</th>
-                    <th class="t-center" style="width:220px;">Area</th>
-                    <th class="t-center">Address</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for customer in customers %}
-                    <tr class="customer-row" title="Click row to edit"
-                        data-id="{{ customer.customer_id }}"
-                        data-name="{{ customer.name }}"
-                        data-contact="{{ customer.contact_person }}"
-                        data-phone="{{ customer.phone_no }}"
-                        data-area="{{ customer.area }}"
-                        data-address="{{ customer.address }}">
-                        <td class="t-center"><span class="strong">{{ customer.customer_id }}</span></td>
-                        <td>{{ customer.name }}</td>
-                        <td>{{ customer.contact_person }}</td>
-                        <td class="t-center">{{ customer.phone_no }}</td>
-                        <td class="t-center">{{ customer.area }}</td>
-                        <td>{{ customer.address }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="t-center" style="padding:1.25rem;">No customers found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+          <div class="pf-actions">
+            <button type="button" id="clearBtnProduct"  class="pf-btn pf-btn-clear">Clear</button>
+            <button type="submit" id="saveBtnProduct"   class="pf-btn pf-btn-save">Save</button>
+            <button type="button" id="deleteBtnProduct" class="pf-btn pf-btn-delete" disabled>Delete</button>
+            <a class="pf-btn pf-btn-search" href="{% url 'profiles' %}?tab=product">Search</a>
+          </div>
         </div>
+
+      </div>
+    </form>
+  </div>
+
+  <div class="pf-card">
+    <div class="pf-table-wrap">
+      <table class="pf-table">
+        <thead>
+          <tr>
+            <th style="width:80px;">ID</th>
+            <th style="width:110px;">Code</th>
+            <th class="col-desc">Description</th>
+            <th style="width:110px;">Quantity</th>
+            <th style="width:120px;">Price</th>
+            <th style="width:120px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr class="product-row" title="Click to edit"
+              data-id="{{ product.product_id }}"
+              data-code="{{ product.product_code }}"
+              data-description="{{ product.description }}"
+              data-price="{{ product.price }}"
+              data-quantity="{{ product.quantity }}"
+              data-status="{{ product.status }}">
+            <td class="col-id">{{ product.product_id }}</td>
+            <td>{{ product.product_code }}</td>
+            <td class="col-desc">{{ product.description }}</td>
+            <td>{{ product.quantity }}</td>
+            <td>{{ product.price|floatformat:2 }}</td>
+            <td>
+              {% if product.status == "Active" %}
+                <span class="status-badge status-active">Active</span>
+              {% elif product.status == "Inactive" %}
+                <span class="status-badge status-inactive">Inactive</span>
+              {% else %}
+                <span class="status-badge status-default">{{ product.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="padding:1.5rem; color:#9ca3af; text-align:center;">No products found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endif %}
+  </div>
 
-    {# ========================= AGENTS ========================= #}
-    {% if active_tab == 'agent' %}
-    <div class="cardx">
-        <form id="agentForm" method="POST" action="{% url 'agent_create' %}" novalidate>
-            {% csrf_token %}
-            <input type="hidden" id="agent_pk" value="">
-            <input type="hidden" id="agent_mode" value="create">
+  {% endif %}
 
-            <div class="grid grid-3-even">
-                <div class="field">
-                    <label class="label">ID</label>
-                    <input type="text" class="input" id="agent_id_display" value="{{ next_agent_id }}" readonly>
-                </div>
 
-                <div class="field" style="grid-column: span 1;">
-                    <label class="label">Name</label>
-                    <div>
-                        <div class="help-err" id="agent_name_err"></div>
-                        <input type="text" class="input" id="agent_name" name="name" maxlength="100" autocomplete="off" placeholder="LAST NAME, First Name, M.i.">
-                    </div>
-                </div>
+  {# ==================== CUSTOMERS ==================== #}
+  {% if active_tab == 'customer' %}
 
-                <div class="field">
-                    <label class="label">Phone #</label>
-                    <div>
-                        <div class="help-err" id="agent_phone_err"></div>
-                        <input type="text" class="input" id="agent_phone" name="phone_no" maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
-                    </div>
-                </div>
-            </div>
+  <h1 class="page-title">Customer Profile</h1>
 
-            <div class="actions">
-                <button type="button" id="clearBtnAgent" class="btnx btn-light">Clear</button>
-                <button type="submit" id="saveBtnAgent" class="btnx btn-primary">Save</button>
-                <button type="button" id="deleteBtnAgent" class="btnx btn-danger" disabled>Delete</button>
-                <a class="btnx btn-secondary" href="{% url 'profiles' %}?tab=agent">Search</a>
-            </div>
-        </form>
-    </div>
+  <div class="pf-card">
+    <form id="customerForm" method="POST" action="{% url 'customer_create' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" id="customer_pk"   value="">
+      <input type="hidden" id="customer_mode" value="create">
 
-    <div class="cardx">
-        <div class="table-wrap">
-            <table class="tablex" style="min-width:700px;">
-                <thead>
-                    <tr>
-                        <th class="t-center" style="width:90px;">ID</th>
-                        <th class="t-center">Name</th>
-                        <th class="t-center" style="width:180px;">Phone Number</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for agent in agents %}
-                    <tr class="agent-row" title="Click row to edit"
-                        data-id="{{ agent.agent_id }}"
-                        data-name="{{ agent.name }}"
-                        data-phone="{{ agent.phone_no }}">
-                        <td class="t-center"><span class="strong">{{ agent.agent_id }}</span></td>
-                        <td>{{ agent.name }}</td>
-                        <td class="t-center">{{ agent.phone_no }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="t-center" style="padding:1.25rem;">No agents found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      <!-- ROW 1: Customer ID + Name -->
+      <div class="pf-form-cols" style="margin-bottom:16px;">
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="customer_id">Customer ID</label>
+          <input type="text" class="pf-input" id="customer_id" value="{{ next_customer_id }}" readonly>
         </div>
-    </div>
-    {% endif %}
-
-    {# ========================= BANKS ========================= #}
-    {% if active_tab == 'bank' %}
-    <div class="cardx">
-        <form id="bankForm" method="POST" action="{% url 'bank_create' %}" novalidate>
-            {% csrf_token %}
-            <input type="hidden" id="bank_pk" value="">
-            <input type="hidden" id="bank_mode" value="create">
-
-            <div class="grid grid-3">
-                <div class="field">
-                    <label class="label">ID</label>
-                    <input type="text" class="input" id="bank_id_display" value="{{ next_bank_id }}" readonly>
-                </div>
-
-                <div class="field">
-                    <label class="label">Acronym</label>
-                    <div>
-                        <div class="help-err" id="bank_acronym_err"></div>
-                        <input type="text" class="input" id="bank_acronym" name="bank_acronym" maxlength="6" autocomplete="off" placeholder="e.g. BDO">
-                    </div>
-                </div>
-
-                <div class="field" style="grid-column: span 1;">
-                    <label class="label">Bank Name</label>
-                    <div>
-                        <div class="help-err" id="bank_name_err"></div>
-                        <input type="text" class="input" id="bank_name" name="name" maxlength="50" autocomplete="off">
-                    </div>
-                </div>
-            </div>
-
-            <div class="actions">
-                <button type="button" id="clearBtnBank" class="btnx btn-light">Clear</button>
-                <button type="submit" id="saveBtnBank" class="btnx btn-primary">Save</button>
-                <button type="button" id="deleteBtnBank" class="btnx btn-danger" disabled>Delete</button>
-                <a class="btnx btn-secondary" href="{% url 'profiles' %}?tab=bank">Search</a>
-            </div>
-        </form>
-    </div>
-
-    <div class="cardx">
-        <div class="table-wrap">
-            <table class="tablex" style="min-width:700px;">
-                <thead>
-                    <tr>
-                        <th class="t-center" style="width:90px;">ID</th>
-                        <th class="t-center" style="width:140px;">Acronym</th>
-                        <th class="t-center">Bank Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for bank in banks %}
-                    <tr class="bank-row" title="Click row to edit"
-                        data-id="{{ bank.bank_id }}"
-                        data-acronym="{{ bank.bank_acronym }}"
-                        data-name="{{ bank.name }}">
-                        <td class="t-center"><span class="strong">{{ bank.bank_id }}</span></td>
-                        <td class="t-center">{{ bank.bank_acronym }}</td>
-                        <td>{{ bank.name }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="t-center" style="padding:1.25rem;">No banks found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="customer_name">Name</label>
+          <div>
+            <div class="help-err" id="customer_name_err"></div>
+            <input type="text" class="pf-input" id="customer_name" name="name"
+                   maxlength="50" autocomplete="off" placeholder="Company or Full Name">
+          </div>
         </div>
-    </div>
-    {% endif %}
-</div>
+      </div>
 
-{# ========================= CONFIRM MODAL (NO BOOTSTRAP) ========================= #}
+      <!-- ROW 2: Contact Person + Phone No. + Area (3 across) -->
+      <div class="pf-row-3">
+        <div class="pf-field">
+          <label class="pf-label" for="contact_person">Contact Person</label>
+          <div>
+            <div class="help-err" id="contact_person_err"></div>
+            <input type="text" class="pf-input" id="contact_person" name="contact_person"
+                   maxlength="50" autocomplete="off" placeholder="LAST NAME, First Name, M.I.">
+          </div>
+        </div>
+        <div class="pf-field">
+          <label class="pf-label" for="customer_phone">Phone No.</label>
+          <div>
+            <div class="help-err" id="customer_phone_err"></div>
+            <input type="text" class="pf-input" id="customer_phone" name="phone_no"
+                   maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
+          </div>
+        </div>
+        <div class="pf-field">
+          <label class="pf-label" for="area">Area</label>
+          <div>
+            <div class="help-err" id="customer_area_err"></div>
+            <select class="pf-select" id="area" name="area">
+              {% for value, label in area_choices %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Address (full width) -->
+      <div class="pf-row-full">
+        <div class="pf-field" style="grid-template-columns: 100px 1fr;">
+          <label class="pf-label" for="customer_address">Address</label>
+          <div>
+            <div class="help-err" id="customer_address_err"></div>
+            <input type="text" class="pf-input" id="customer_address" name="address"
+                   maxlength="150" autocomplete="off" placeholder="Full address">
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="pf-actions">
+        <button type="button" id="clearBtnCustomer"  class="pf-btn pf-btn-clear">Clear</button>
+        <button type="submit" id="saveBtnCustomer"   class="pf-btn pf-btn-save">Save</button>
+        <button type="button" id="deleteBtnCustomer" class="pf-btn pf-btn-delete" disabled>Delete</button>
+        <a class="pf-btn pf-btn-search" href="{% url 'profiles' %}?tab=customer">Search</a>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="pf-card">
+    <div class="pf-table-wrap">
+      <table class="pf-table" style="min-width:900px;">
+        <thead>
+          <tr>
+            <th style="width:70px;">ID</th>
+            <th class="col-desc" style="width:160px;">Name</th>
+            <th class="col-desc" style="width:180px;">Contact Person</th>
+            <th style="width:140px;">Phone No.</th>
+            <th style="width:180px;">Area</th>
+            <th class="col-desc">Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+          <tr class="customer-row" title="Click to edit"
+              data-id="{{ customer.customer_id }}"
+              data-name="{{ customer.name }}"
+              data-contact="{{ customer.contact_person }}"
+              data-phone="{{ customer.phone_no }}"
+              data-area="{{ customer.area }}"
+              data-address="{{ customer.address }}">
+            <td class="col-id">{{ customer.customer_id }}</td>
+            <td class="col-desc">{{ customer.name }}</td>
+            <td class="col-desc">{{ customer.contact_person }}</td>
+            <td>{{ customer.phone_no }}</td>
+            <td>{{ customer.area }}</td>
+            <td class="col-desc" style="white-space:nowrap;">{{ customer.address }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="padding:1.5rem; color:#9ca3af; text-align:center;">No customers found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+
+
+  {# ==================== AGENTS ==================== #}
+  {% if active_tab == 'agent' %}
+
+  <h1 class="page-title">Agent Profile</h1>
+
+  <div class="pf-card">
+    <form id="agentForm" method="POST" action="{% url 'agent_create' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" id="agent_pk"   value="">
+      <input type="hidden" id="agent_mode" value="create">
+
+      <!-- Single row: ID + Name + Phone No. -->
+      <div style="display:grid; grid-template-columns:1fr 2fr 1.5fr; gap:0 20px; margin-bottom:16px; align-items:start;">
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="agent_id_display">ID</label>
+          <input type="text" class="pf-input" id="agent_id_display" value="{{ next_agent_id }}" readonly>
+        </div>
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="agent_name">Name</label>
+          <div>
+            <div class="help-err" id="agent_name_err"></div>
+            <input type="text" class="pf-input" id="agent_name" name="name"
+                   maxlength="100" autocomplete="off" placeholder="LAST NAME, First Name, M.I.">
+          </div>
+        </div>
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="agent_phone">Phone No.</label>
+          <div>
+            <div class="help-err" id="agent_phone_err"></div>
+            <input type="text" class="pf-input" id="agent_phone" name="phone_no"
+                   maxlength="13" placeholder="09XX XXX XXXX" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="pf-actions">
+        <button type="button" id="clearBtnAgent"  class="pf-btn pf-btn-clear">Clear</button>
+        <button type="submit" id="saveBtnAgent"   class="pf-btn pf-btn-save">Save</button>
+        <button type="button" id="deleteBtnAgent" class="pf-btn pf-btn-delete" disabled>Delete</button>
+        <a class="pf-btn pf-btn-search" href="{% url 'profiles' %}?tab=agent">Search</a>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="pf-card">
+    <div class="pf-table-wrap">
+      <table class="pf-table" style="min-width:500px;">
+        <thead>
+          <tr>
+            <th style="width:80px;">ID</th>
+            <th class="col-desc">Name</th>
+            <th style="width:170px;">Phone No.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for agent in agents %}
+          <tr class="agent-row" title="Click to edit"
+              data-id="{{ agent.agent_id }}"
+              data-name="{{ agent.name }}"
+              data-phone="{{ agent.phone_no }}">
+            <td class="col-id">{{ agent.agent_id }}</td>
+            <td class="col-desc">{{ agent.name }}</td>
+            <td>{{ agent.phone_no }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="padding:1.5rem; color:#9ca3af; text-align:center;">No agents found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+
+
+  {# ==================== BANKS ==================== #}
+  {% if active_tab == 'bank' %}
+
+  <h1 class="page-title">Bank Profile</h1>
+
+  <div class="pf-card">
+    <form id="bankForm" method="POST" action="{% url 'bank_create' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" id="bank_pk"   value="">
+      <input type="hidden" id="bank_mode" value="create">
+
+      <!-- Single row: ID + Acronym + Bank Name -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 2fr; gap:0 20px; margin-bottom:16px; align-items:start;">
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="bank_id_display">ID</label>
+          <input type="text" class="pf-input" id="bank_id_display" value="{{ next_bank_id }}" readonly>
+        </div>
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="bank_acronym">Acronym</label>
+          <div>
+            <div class="help-err" id="bank_acronym_err"></div>
+            <input type="text" class="pf-input" id="bank_acronym" name="bank_acronym"
+                   maxlength="6" autocomplete="off" placeholder="e.g. BDO">
+          </div>
+        </div>
+        <div class="pf-field" style="margin-bottom:0;">
+          <label class="pf-label" for="bank_name">Bank Name</label>
+          <div>
+            <div class="help-err" id="bank_name_err"></div>
+            <input type="text" class="pf-input" id="bank_name" name="name"
+                   maxlength="50" autocomplete="off" placeholder="Full bank name">
+          </div>
+        </div>
+      </div>
+
+      <div class="pf-actions">
+        <button type="button" id="clearBtnBank"  class="pf-btn pf-btn-clear">Clear</button>
+        <button type="submit" id="saveBtnBank"   class="pf-btn pf-btn-save">Save</button>
+        <button type="button" id="deleteBtnBank" class="pf-btn pf-btn-delete" disabled>Delete</button>
+        <a class="pf-btn pf-btn-search" href="{% url 'profiles' %}?tab=bank">Search</a>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="pf-card">
+    <div class="pf-table-wrap">
+      <table class="pf-table" style="min-width:500px;">
+        <thead>
+          <tr>
+            <th style="width:80px;">ID</th>
+            <th style="width:140px;">Code</th>
+            <th class="col-desc">Bank Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bank in banks %}
+          <tr class="bank-row" title="Click to edit"
+              data-id="{{ bank.bank_id }}"
+              data-acronym="{{ bank.bank_acronym }}"
+              data-name="{{ bank.name }}">
+            <td class="col-id">{{ bank.bank_id }}</td>
+            <td>{{ bank.bank_acronym }}</td>
+            <td class="col-desc">{{ bank.name }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="padding:1.5rem; color:#9ca3af; text-align:center;">No banks found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div><!-- /page-wrap -->
+
+
+{# ==================== CONFIRM MODAL ==================== #}
 <div class="modal-backdrop" id="confirmBackdrop"></div>
 <div class="modalx" id="confirmModal" aria-hidden="true">
-    <div class="modal-card">
-        <div class="modal-head">
-            <div class="modal-title">Confirmation</div>
-            <button type="button" class="modal-close" id="confirmCloseBtn">×</button>
-        </div>
-
-        <div class="modal-body">
-            <div class="modal-question" id="confirmQuestion"></div>
-            <div class="modal-sub">Information in the record contains the following:</div>
-            <table class="kv">
-                <tbody id="confirmFieldsBody"></tbody>
-            </table>
-        </div>
-
-        <div class="modal-foot">
-            <button type="button" class="btnx btn-light" id="confirmCancelBtn">Cancel</button>
-            <button type="button" class="btnx btn-primary" id="confirmOkBtn">Save</button>
-        </div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Confirmation</div>
+      <button type="button" class="modal-close" id="confirmCloseBtn">×</button>
     </div>
+    <div class="modal-body">
+      <div id="confirmQuestion" style="font-size:14px; font-weight:600; color:#111827; margin-bottom:6px;"></div>
+      <div class="modal-sub">Information in the record contains the following:</div>
+      <table class="kv"><tbody id="confirmFieldsBody"></tbody></table>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="modal-btn"                  id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" id="confirmOkBtn">Save</button>
+    </div>
+  </div>
 </div>
+
 <script>
 (function () {
-    // ------------------ URL helpers ------------------
-    const URLS = {
-        product_update: "{% url 'product_update' '__PK__' %}",
-        product_delete: "{% url 'product_delete' '__PK__' %}",
-        customer_update: "{% url 'customer_update' '__PK__' %}",
-        customer_delete: "{% url 'customer_delete' '__PK__' %}",
-        agent_update: "{% url 'agent_update' '__PK__' %}",
-        agent_delete: "{% url 'agent_delete' '__PK__' %}",
-        bank_update: "{% url 'bank_update' '__PK__' %}",
-        bank_delete: "{% url 'bank_delete' '__PK__' %}",
-    };
+  const URLS = {
+    product_update:  "{% url 'product_update'  '__PK__' %}",
+    product_delete:  "{% url 'product_delete'  '__PK__' %}",
+    customer_update: "{% url 'customer_update' '__PK__' %}",
+    customer_delete: "{% url 'customer_delete' '__PK__' %}",
+    agent_update:    "{% url 'agent_update'    '__PK__' %}",
+    agent_delete:    "{% url 'agent_delete'    '__PK__' %}",
+    bank_update:     "{% url 'bank_update'     '__PK__' %}",
+    bank_delete:     "{% url 'bank_delete'     '__PK__' %}",
+  };
+  const buildUrl = (t, pk) => t.replace("__PK__", pk);
+  const csrf = () => document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || "";
 
-    function buildUrl(t, pk) { return t.replace("__PK__", pk); }
-    function csrf() { return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ""; }
+  function postTo(url) {
+    const f = document.createElement("form");
+    f.method = "POST"; f.action = url;
+    const c = document.createElement("input");
+    c.type = "hidden"; c.name = "csrfmiddlewaretoken"; c.value = csrf();
+    f.appendChild(c); document.body.appendChild(f); f.submit();
+  }
 
-    function postTo(url) {
-        const f = document.createElement("form");
-        f.method = "POST";
-        f.action = url;
-        const c = document.createElement("input");
-        c.type = "hidden";
-        c.name = "csrfmiddlewaretoken";
-        c.value = csrf();
-        f.appendChild(c);
-        document.body.appendChild(f);
-        f.submit();
+  function setMode({ mode, form, saveBtn, deleteBtn, modeEl, pkEl, createUrl, updateUrlTemplate, pk }) {
+    if (mode === "create") {
+      modeEl.value = "create"; pkEl.value = ""; form.action = createUrl;
+      saveBtn.textContent = "Save"; deleteBtn.disabled = true;
+    } else {
+      modeEl.value = "edit"; pkEl.value = pk;
+      form.action = buildUrl(updateUrlTemplate, pk);
+      saveBtn.textContent = "Update"; deleteBtn.disabled = false;
+    }
+  }
+
+  const RX = {
+    phonePH:    /^09\d{2}\s\d{3}\s\d{4}$/,
+    nameText:   /^[A-Za-z0-9 .,'\-]+$/,
+    productCode:/^[A-Za-z0-9]+$/,
+    bankAcronym:/^[A-Z0-9]{1,6}$/,
+    money:      /^\d+(\.\d{1,2})?$/,
+  };
+
+  const trimVal    = el => (el?.value ?? "").trim();
+  const markTouched= el => { if (el) el.dataset.touched = "1"; };
+  const isTouched  = el => el?.dataset?.touched === "1";
+
+  function showErr(inputEl, errEl, msg, submitted = false) {
+    if (!inputEl || !errEl) return;
+    const show = submitted || isTouched(inputEl);
+    if (!show) { inputEl.classList.remove("is-invalid"); errEl.textContent = ""; errEl.classList.remove("show"); return; }
+    if (msg)   { inputEl.classList.add("is-invalid");    errEl.textContent = msg; errEl.classList.add("show"); }
+    else       { inputEl.classList.remove("is-invalid"); errEl.textContent = ""; errEl.classList.remove("show"); }
+  }
+
+  const validateRequiredText = (el, errEl, label, maxLen, rx, s) => {
+    const v = trimVal(el);
+    if (!v)                          return showErr(el, errEl, `${label} is required.`, s), false;
+    if (maxLen && v.length > maxLen) return showErr(el, errEl, `${label} must be at most ${maxLen} characters.`, s), false;
+    if (rx && !rx.test(v))           return showErr(el, errEl, `${label} has invalid characters.`, s), false;
+    return showErr(el, errEl, "", s), true;
+  };
+  const validatePhone = (el, errEl, label, s) => {
+    const v = trimVal(el);
+    if (!v)                return showErr(el, errEl, `${label} is required.`, s), false;
+    if (!RX.phonePH.test(v)) return showErr(el, errEl, `Invalid format. Use: 09XX XXX XXXX`, s), false;
+    return showErr(el, errEl, "", s), true;
+  };
+  const validateIntRange = (el, errEl, label, min, max, s) => {
+    const raw = trimVal(el); if (raw === "") return showErr(el, errEl, `${label} is required.`, s), false;
+    const n = Number(raw);
+    if (!Number.isInteger(n))   return showErr(el, errEl, `${label} must be a whole number.`, s), false;
+    if (n < min || n > max)     return showErr(el, errEl, `${label} must be between ${min} and ${max}.`, s), false;
+    return showErr(el, errEl, "", s), true;
+  };
+  const validateMoney = (el, errEl, label, min, max, s) => {
+    const raw = trimVal(el); if (raw === "") return showErr(el, errEl, `${label} is required.`, s), false;
+    if (!RX.money.test(raw)) return showErr(el, errEl, `${label} must be a valid amount (up to 2 decimals).`, s), false;
+    const n = Number(raw);
+    if (n < min || n > max) return showErr(el, errEl, `${label} must be between ${min} and ${max}.`, s), false;
+    return showErr(el, errEl, "", s), true;
+  };
+  const validateSelectNotEmpty = (el, errEl, label, s) => {
+    if (!trimVal(el)) return showErr(el, errEl, `${label} is required.`, s), false;
+    return showErr(el, errEl, "", s), true;
+  };
+
+  function autoFormatPhone(el) {
+    const d = (el.value || "").replace(/\D/g, "").slice(0, 11);
+    el.value = d.length <= 4 ? d : d.length <= 7 ? `${d.slice(0,4)} ${d.slice(4)}` : `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+  }
+
+  function wireFormValidation({ form, saveBtn, validators }) {
+    if (!form) return;
+    let submitted = false;
+    function runAll(show = false) {
+      let ok = true;
+      validators.forEach(fn => { ok = fn(show) && ok; });
+      const anyTouched = !!form.querySelector('[data-touched="1"]');
+      if (saveBtn) saveBtn.disabled = (submitted || anyTouched) ? !ok : false;
+      return ok;
+    }
+    form.querySelectorAll("input, select").forEach(el => {
+      const evt = el.tagName === "SELECT" ? "change" : "input";
+      el.addEventListener(evt,   () => { markTouched(el); runAll(false); });
+      el.addEventListener("blur",() => { markTouched(el); runAll(false); });
+    });
+    runAll(false);
+    return { runAll, setSubmitted: v => { submitted = v; } };
+  }
+
+  /* ---- Modal ---- */
+  const modalEl      = document.getElementById("confirmModal");
+  const backdropEl   = document.getElementById("confirmBackdrop");
+  const questionEl   = document.getElementById("confirmQuestion");
+  const fieldsBodyEl = document.getElementById("confirmFieldsBody");
+  const okBtn        = document.getElementById("confirmOkBtn");
+  const cancelBtn    = document.getElementById("confirmCancelBtn");
+  const closeBtn     = document.getElementById("confirmCloseBtn");
+  let pendingOnOk    = null;
+
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[m]);
+
+  function openConfirm({ question, okText, fields, onOk }) {
+    questionEl.textContent = question;
+    okBtn.textContent = okText || "Save";
+    fieldsBodyEl.innerHTML = "";
+    fields.forEach(f => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<th>${esc(f.label)}</th><td>${esc(f.value)}</td>`;
+      fieldsBodyEl.appendChild(tr);
+    });
+    pendingOnOk = onOk;
+    backdropEl.classList.add("open"); modalEl.classList.add("open");
+  }
+  function closeConfirm() {
+    backdropEl.classList.remove("open"); modalEl.classList.remove("open"); pendingOnOk = null;
+  }
+
+  okBtn?.addEventListener("click",     () => { if (!pendingOnOk) return; const fn = pendingOnOk; closeConfirm(); fn(); });
+  cancelBtn?.addEventListener("click",  closeConfirm);
+  closeBtn?.addEventListener("click",   closeConfirm);
+  backdropEl?.addEventListener("click", closeConfirm);
+  document.addEventListener("keydown",  e => { if (e.key === "Escape" && modalEl?.classList.contains("open")) closeConfirm(); });
+
+  /* ---- Field collectors ---- */
+  const productFields  = () => [
+    { label:"ID",          value: document.getElementById("product_id")?.value || "" },
+    { label:"Code",        value: document.getElementById("product_code")?.value || "" },
+    { label:"Description", value: document.getElementById("description")?.value || "" },
+    { label:"Price",       value: document.getElementById("price")?.value || "" },
+    { label:"Quantity",    value: document.getElementById("quantity")?.value || "" },
+    { label:"Status",      value: document.getElementById("status")?.value || "" },
+  ];
+  const customerFields = () => [
+    { label:"ID",             value: document.getElementById("customer_id")?.value || "" },
+    { label:"Name",           value: document.getElementById("customer_name")?.value || "" },
+    { label:"Contact Person", value: document.getElementById("contact_person")?.value || "" },
+    { label:"Phone No.",      value: document.getElementById("customer_phone")?.value || "" },
+    { label:"Area",           value: document.getElementById("area")?.value || "" },
+    { label:"Address",        value: document.getElementById("customer_address")?.value || "" },
+  ];
+  const agentFields    = () => [
+    { label:"ID",        value: document.getElementById("agent_id_display")?.value || "" },
+    { label:"Name",      value: document.getElementById("agent_name")?.value || "" },
+    { label:"Phone No.", value: document.getElementById("agent_phone")?.value || "" },
+  ];
+  const bankFields     = () => [
+    { label:"ID",      value: document.getElementById("bank_id_display")?.value || "" },
+    { label:"Acronym", value: document.getElementById("bank_acronym")?.value || "" },
+    { label:"Name",    value: document.getElementById("bank_name")?.value || "" },
+  ];
+
+  /* ==================== PRODUCTS ==================== */
+  const productForm = document.getElementById("productForm");
+  if (productForm) {
+    const modeEl    = document.getElementById("product_mode");
+    const pkEl      = document.getElementById("product_pk");
+    const idEl      = document.getElementById("product_id");
+    const codeEl    = document.getElementById("product_code");
+    const descEl    = document.getElementById("description");
+    const priceEl   = document.getElementById("price");
+    const qtyEl     = document.getElementById("quantity");
+    const statusEl  = document.getElementById("status");
+    const saveBtn   = document.getElementById("saveBtnProduct");
+    const deleteBtn = document.getElementById("deleteBtnProduct");
+    const clearBtn  = document.getElementById("clearBtnProduct");
+    const NEXT_ID   = "{{ next_product_id }}";
+    const CREATE_URL= "{% url 'product_create' %}";
+    const codeErr   = document.getElementById("product_code_err");
+    const descErr   = document.getElementById("product_description_err");
+    const priceErr  = document.getElementById("product_price_err");
+    const qtyErr    = document.getElementById("product_quantity_err");
+
+    function resetProductForm() {
+      idEl.value = NEXT_ID; codeEl.value = NEXT_ID; descEl.value = "";
+      priceEl.value = ""; qtyEl.value = 0; statusEl.value = "";
+      [codeEl, descEl, priceEl, qtyEl, statusEl].forEach(el => { if (el) delete el.dataset.touched; });
+      [codeErr, descErr, priceErr, qtyErr].forEach((e, i) =>
+        showErr([codeEl, descEl, priceEl, qtyEl][i], e, "", false));
     }
 
-    function setMode({ mode, form, saveBtn, deleteBtn, modeEl, pkEl, createUrl, updateUrlTemplate, pk }) {
-        if (mode === "create") {
-            modeEl.value = "create";
-            pkEl.value = "";
-            form.action = createUrl;
-            saveBtn.textContent = "Save";
-            deleteBtn.disabled = true;
-        } else {
-            modeEl.value = "edit";
-            pkEl.value = pk;
-            form.action = buildUrl(updateUrlTemplate, pk);
-            saveBtn.textContent = "Update";
-            deleteBtn.disabled = false;
-        }
-    }
-
-    // ------------------ Live validation helpers ------------------
-    const RX = {
-        phonePH: /^09\d{2}\s\d{3}\s\d{4}$/,
-        nameText: /^[A-Za-z0-9 .,'-]+$/,
-        productCode: /^[A-Za-z0-9]+$/,
-        bankAcronym: /^[A-Z0-9]{1,6}$/,
-        money: /^\d+(\.\d{1,2})?$/,
-    };
-
-    function trimVal(el) { return (el?.value ?? "").trim(); }
-
-    function markTouched(el) { if (el) el.dataset.touched = "1"; }
-    function isTouched(el) { return el?.dataset?.touched === "1"; }
-
-    function showErr(inputEl, errEl, msg, submitted=false) {
-        if (!inputEl || !errEl) return;
-
-        const shouldShow = submitted || isTouched(inputEl);
-
-        if (!shouldShow) {
-            inputEl.classList.remove("is-invalid");
-            errEl.textContent = "";
-            errEl.classList.remove("show");
-            return;
-        }
-
-        if (msg) {
-            inputEl.classList.add("is-invalid");
-            errEl.textContent = msg;
-            errEl.classList.add("show");
-        } else {
-            inputEl.classList.remove("is-invalid");
-            errEl.textContent = "";
-            errEl.classList.remove("show");
-        }
-    }
-
-    function validateRequiredText(el, errEl, label, maxLen, rx, submitted=false) {
-        const v = trimVal(el);
-        if (!v) return showErr(el, errEl, `${label} is required.`, submitted), false;
-        if (maxLen && v.length > maxLen) return showErr(el, errEl, `${label} must be at most ${maxLen} characters.`, submitted), false;
-        if (rx && !rx.test(v)) return showErr(el, errEl, `${label} has invalid characters.`, submitted), false;
-        showErr(el, errEl, "", submitted);
-        return true;
-    }
-
-    function validatePhone(el, errEl, label, submitted=false) {
-        const v = trimVal(el);
-        if (!v) return showErr(el, errEl, `${label} is required.`, submitted), false;
-        if (v.length !== 13) return showErr(el, errEl, `${label} must be exactly 13 characters (09XX XXX XXXX).`, submitted), false;
-        if (!RX.phonePH.test(v)) return showErr(el, errEl, `Invalid format. Use: 09XX XXX XXXX`, submitted), false;
-        showErr(el, errEl, "", submitted);
-        return true;
-    }
-
-    function validateIntRange(el, errEl, label, min, max, submitted=false) {
-        const raw = trimVal(el);
-        if (raw === "") return showErr(el, errEl, `${label} is required.`, submitted), false;
-        const n = Number(raw);
-        if (!Number.isInteger(n)) return showErr(el, errEl, `${label} must be a whole number.`, submitted), false;
-        if (n < min || n > max) return showErr(el, errEl, `${label} must be between ${min} and ${max}.`, submitted), false;
-        showErr(el, errEl, "", submitted);
-        return true;
-    }
-
-    function validateMoney(el, errEl, label, min, max, submitted=false) {
-        const raw = trimVal(el);
-        if (raw === "") return showErr(el, errEl, `${label} is required.`, submitted), false;
-        if (!RX.money.test(raw)) return showErr(el, errEl, `${label} must be a valid amount (up to 2 decimals).`, submitted), false;
-        const n = Number(raw);
-        if (Number.isNaN(n)) return showErr(el, errEl, `${label} must be a number.`, submitted), false;
-        if (n < min || n > max) return showErr(el, errEl, `${label} must be between ${min.toFixed(2)} and ${max.toFixed(2)}.`, submitted), false;
-        showErr(el, errEl, "", submitted);
-        return true;
-    }
-
-    function validateSelectNotEmpty(el, errEl, label, submitted=false) {
-        const v = trimVal(el);
-        if (!v) return showErr(el, errEl, `${label} is required.`, submitted), false;
-        showErr(el, errEl, "", submitted);
-        return true;
-    }
-
-    // FIXED phone formatter (no "stuck after 09xx")
-    function autoFormatPhone(el) {
-        const digits = (el.value || "").replace(/\D/g, "").slice(0, 11);
-        let out = "";
-        if (digits.length <= 4) out = digits;
-        else if (digits.length <= 7) out = digits.slice(0, 4) + " " + digits.slice(4);
-        else out = digits.slice(0, 4) + " " + digits.slice(4, 7) + " " + digits.slice(7);
-        el.value = out;
-    }
-
-    // IMPORTANT: validation now exposes runAll() so we can call it BEFORE opening the modal
-    function wireFormValidation({ form, saveBtn, validators }) {
-        if (!form) return;
-
-        let submitted = false;
-
-        function runAll(show=false) {
-            let ok = true;
-            validators.forEach(fn => { ok = fn(show) && ok; });
-
-            const anyTouched = !!form.querySelector('[data-touched="1"]');
-            if (saveBtn) saveBtn.disabled = (submitted || anyTouched) ? !ok : false;
-            return ok;
-        }
-
-        form.querySelectorAll("input, select, textarea").forEach(el => {
-            const evt = (el.tagName === "SELECT") ? "change" : "input";
-
-            el.addEventListener(evt, () => {
-                markTouched(el);
-                runAll(false);
-            });
-
-            el.addEventListener("blur", () => {
-                markTouched(el);
-                runAll(false);
-            });
-        });
-
-        // We DO NOT attach submit validation here anymore (to avoid conflicts).
-        // We'll handle submit ourselves per-form (validate -> confirm -> submit).
-        runAll(false);
-        return { runAll, setSubmitted: (v) => { submitted = v; } };
-    }
-
-    // ------------------ Confirmation modal helpers ------------------
-    const modalEl = document.getElementById("confirmModal");
-    const backdropEl = document.getElementById("confirmBackdrop");
-    const questionEl = document.getElementById("confirmQuestion");
-    const fieldsBodyEl = document.getElementById("confirmFieldsBody");
-    const okBtn = document.getElementById("confirmOkBtn");
-    const cancelBtn = document.getElementById("confirmCancelBtn");
-    const closeBtn = document.getElementById("confirmCloseBtn");
-
-    let pendingOnOk = null;
-
-    function escapeHtml(s) {
-        return String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"})[m]);
-    }
-
-    function openConfirm({ question, okText, fields, onOk }) {
-        questionEl.textContent = question;
-        okBtn.textContent = okText || "Save";
-        fieldsBodyEl.innerHTML = "";
-
-        fields.forEach(f => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<th>${escapeHtml(f.label)}</th><td>${escapeHtml(f.value)}</td>`;
-            fieldsBodyEl.appendChild(tr);
-        });
-
-        pendingOnOk = onOk;
-        backdropEl.classList.add("open");
-        modalEl.classList.add("open");
-    }
-
-    function closeConfirm() {
-        backdropEl.classList.remove("open");
-        modalEl.classList.remove("open");
-        pendingOnOk = null;
-    }
-
-    okBtn?.addEventListener("click", () => {
-        if (!pendingOnOk) return;
-        const fn = pendingOnOk;
-        closeConfirm();
-        fn();
+    const validation = wireFormValidation({
+      form: productForm, saveBtn,
+      validators: [
+        s => validateRequiredText(codeEl,  codeErr,  "Product Code", 10,  RX.productCode, s),
+        s => validateRequiredText(descEl,  descErr,  "Description",  150, RX.nameText, s),
+        s => validateMoney(priceEl, priceErr, "Price", 0, 99999999.99, s),
+        s => validateIntRange(qtyEl, qtyErr, "Quantity", 0, 100000, s),
+      ]
     });
 
-    cancelBtn?.addEventListener("click", closeConfirm);
-    closeBtn?.addEventListener("click", closeConfirm);
-    backdropEl?.addEventListener("click", closeConfirm);
+    const toCreate = () => {
+      resetProductForm();
+      setMode({ mode:"create", form:productForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.product_update });
+      validation?.runAll?.(false);
+    };
 
-    // optional: Esc key closes
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modalEl?.classList.contains("open")) closeConfirm();
+    document.querySelectorAll(".product-row").forEach(row => {
+      row.addEventListener("click", () => {
+        idEl.value = row.dataset.id; codeEl.value = row.dataset.code || "";
+        descEl.value = row.dataset.description || ""; priceEl.value = row.dataset.price || "";
+        qtyEl.value = row.dataset.quantity || 0; statusEl.value = row.dataset.status || "";
+        [codeEl, descEl, priceEl, qtyEl, statusEl].forEach(el => { if (el) delete el.dataset.touched; });
+        setMode({ mode:"edit", form:productForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.product_update, pk:row.dataset.id });
+        validation?.runAll?.(false);
+      });
     });
 
-    // ------------------ Field collectors ------------------
-    function productFields() {
-        return [
-            { label: "ID", value: document.getElementById("product_id")?.value || "" },
-            { label: "Code", value: document.getElementById("product_code")?.value || "" },
-            { label: "Description", value: document.getElementById("description")?.value || "" },
-            { label: "Price", value: document.getElementById("price")?.value || "" },
-            { label: "Quantity", value: document.getElementById("quantity")?.value || "" },
-            { label: "Status", value: document.getElementById("status")?.value || "" },
-        ];
+    clearBtn?.addEventListener("click", toCreate);
+
+    productForm.addEventListener("submit", e => {
+      e.preventDefault(); validation.setSubmitted(true);
+      if (!validation.runAll(true)) return;
+      const mode = modeEl.value || "create";
+      openConfirm({
+        question: mode === "create" ? "Do you want to save this new product record?" : "Do you want to update this product record?",
+        okText:"Save", fields:productFields(), onOk:() => productForm.submit()
+      });
+    });
+    deleteBtn?.addEventListener("click", () => {
+      const pk = pkEl.value; if (!pk) return;
+      openConfirm({ question:"Do you want to delete this product record?", okText:"Delete", fields:productFields(), onOk:() => postTo(buildUrl(URLS.product_delete, pk)) });
+    });
+  }
+
+  /* ==================== CUSTOMERS ==================== */
+  const customerForm = document.getElementById("customerForm");
+  if (customerForm) {
+    const modeEl    = document.getElementById("customer_mode");
+    const pkEl      = document.getElementById("customer_pk");
+    const idEl      = document.getElementById("customer_id");
+    const nameEl    = document.getElementById("customer_name");
+    const contactEl = document.getElementById("contact_person");
+    const phoneEl   = document.getElementById("customer_phone");
+    const areaEl    = document.getElementById("area");
+    const addrEl    = document.getElementById("customer_address");
+    const saveBtn   = document.getElementById("saveBtnCustomer");
+    const deleteBtn = document.getElementById("deleteBtnCustomer");
+    const clearBtn  = document.getElementById("clearBtnCustomer");
+    const NEXT_ID   = "{{ next_customer_id }}";
+    const CREATE_URL= "{% url 'customer_create' %}";
+    const nameErr    = document.getElementById("customer_name_err");
+    const contactErr = document.getElementById("contact_person_err");
+    const phoneErr   = document.getElementById("customer_phone_err");
+    const areaErr    = document.getElementById("customer_area_err");
+    const addrErr    = document.getElementById("customer_address_err");
+
+    function resetCustomerForm() {
+      idEl.value = NEXT_ID; nameEl.value = ""; contactEl.value = "";
+      phoneEl.value = ""; addrEl.value = ""; areaEl.value = "No Selection";
+      [nameEl, contactEl, phoneEl, addrEl, areaEl].forEach(el => { if (el) delete el.dataset.touched; });
+      [[nameEl,nameErr],[contactEl,contactErr],[phoneEl,phoneErr],[areaEl,areaErr],[addrEl,addrErr]]
+        .forEach(([el,err]) => showErr(el, err, "", false));
     }
 
-    function customerFields() {
-        return [
-            { label: "ID", value: document.getElementById("customer_id")?.value || "" },
-            { label: "Name", value: document.getElementById("customer_name")?.value || "" },
-            { label: "Contact Person", value: document.getElementById("contact_person")?.value || "" },
-            { label: "Phone No.", value: document.getElementById("customer_phone")?.value || "" },
-            { label: "Area", value: document.getElementById("area")?.value || "" },
-            { label: "Address", value: document.getElementById("customer_address")?.value || "" },
-        ];
+    const validation = wireFormValidation({
+      form: customerForm, saveBtn,
+      validators: [
+        s => validateRequiredText(nameEl,    nameErr,    "Customer Name",  50,  RX.nameText, s),
+        s => validateRequiredText(contactEl, contactErr, "Contact Person", 50,  RX.nameText, s),
+        s => validatePhone(phoneEl, phoneErr, "Phone Number", s),
+        s => validateSelectNotEmpty(areaEl, areaErr, "Area", s),
+        s => validateRequiredText(addrEl, addrErr, "Address", 150, null, s),
+      ]
+    });
+
+    phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
+
+    const toCreate = () => {
+      resetCustomerForm();
+      setMode({ mode:"create", form:customerForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.customer_update });
+      validation?.runAll?.(false);
+    };
+
+    document.querySelectorAll(".customer-row").forEach(row => {
+      row.addEventListener("click", () => {
+        idEl.value = row.dataset.id; nameEl.value = row.dataset.name || "";
+        contactEl.value = row.dataset.contact || ""; phoneEl.value = row.dataset.phone || "";
+        areaEl.value = row.dataset.area || "No Selection"; addrEl.value = row.dataset.address || "";
+        [nameEl, contactEl, phoneEl, addrEl, areaEl].forEach(el => { if (el) delete el.dataset.touched; });
+        setMode({ mode:"edit", form:customerForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.customer_update, pk:row.dataset.id });
+        validation?.runAll?.(false);
+      });
+    });
+
+    clearBtn?.addEventListener("click", toCreate);
+
+    customerForm.addEventListener("submit", e => {
+      e.preventDefault(); validation.setSubmitted(true);
+      if (!validation.runAll(true)) return;
+      const mode = modeEl.value || "create";
+      openConfirm({
+        question: mode === "create" ? "Do you want to save this new customer record?" : "Do you want to update this customer record?",
+        okText:"Save", fields:customerFields(), onOk:() => customerForm.submit()
+      });
+    });
+    deleteBtn?.addEventListener("click", () => {
+      const pk = pkEl.value; if (!pk) return;
+      openConfirm({ question:"Do you want to delete this customer record?", okText:"Delete", fields:customerFields(), onOk:() => postTo(buildUrl(URLS.customer_delete, pk)) });
+    });
+  }
+
+  /* ==================== AGENTS ==================== */
+  const agentForm = document.getElementById("agentForm");
+  if (agentForm) {
+    const modeEl    = document.getElementById("agent_mode");
+    const pkEl      = document.getElementById("agent_pk");
+    const idEl      = document.getElementById("agent_id_display");
+    const nameEl    = document.getElementById("agent_name");
+    const phoneEl   = document.getElementById("agent_phone");
+    const saveBtn   = document.getElementById("saveBtnAgent");
+    const deleteBtn = document.getElementById("deleteBtnAgent");
+    const clearBtn  = document.getElementById("clearBtnAgent");
+    const NEXT_ID   = "{{ next_agent_id }}";
+    const CREATE_URL= "{% url 'agent_create' %}";
+    const nameErr   = document.getElementById("agent_name_err");
+    const phoneErr  = document.getElementById("agent_phone_err");
+
+    function resetAgentForm() {
+      idEl.value = NEXT_ID; nameEl.value = ""; phoneEl.value = "";
+      [nameEl, phoneEl].forEach(el => { if (el) delete el.dataset.touched; });
+      showErr(nameEl, nameErr, "", false); showErr(phoneEl, phoneErr, "", false);
     }
 
-    function agentFields() {
-        return [
-            { label: "ID", value: document.getElementById("agent_id_display")?.value || "" },
-            { label: "Name", value: document.getElementById("agent_name")?.value || "" },
-            { label: "Phone No.", value: document.getElementById("agent_phone")?.value || "" },
-        ];
+    const validation = wireFormValidation({
+      form: agentForm, saveBtn,
+      validators: [
+        s => validateRequiredText(nameEl, nameErr, "Agent Name", 100, RX.nameText, s),
+        s => validatePhone(phoneEl, phoneErr, "Phone Number", s),
+      ]
+    });
+
+    phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
+
+    const toCreate = () => {
+      resetAgentForm();
+      setMode({ mode:"create", form:agentForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.agent_update });
+      validation?.runAll?.(false);
+    };
+
+    document.querySelectorAll(".agent-row").forEach(row => {
+      row.addEventListener("click", () => {
+        idEl.value = row.dataset.id; nameEl.value = row.dataset.name || "";
+        phoneEl.value = row.dataset.phone || "";
+        [nameEl, phoneEl].forEach(el => { if (el) delete el.dataset.touched; });
+        setMode({ mode:"edit", form:agentForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.agent_update, pk:row.dataset.id });
+        validation?.runAll?.(false);
+      });
+    });
+
+    clearBtn?.addEventListener("click", toCreate);
+
+    agentForm.addEventListener("submit", e => {
+      e.preventDefault(); validation.setSubmitted(true);
+      if (!validation.runAll(true)) return;
+      const mode = modeEl.value || "create";
+      openConfirm({
+        question: mode === "create" ? "Do you want to save this new agent record?" : "Do you want to update this agent record?",
+        okText:"Save", fields:agentFields(), onOk:() => agentForm.submit()
+      });
+    });
+    deleteBtn?.addEventListener("click", () => {
+      const pk = pkEl.value; if (!pk) return;
+      openConfirm({ question:"Do you want to delete this agent record?", okText:"Delete", fields:agentFields(), onOk:() => postTo(buildUrl(URLS.agent_delete, pk)) });
+    });
+  }
+
+  /* ==================== BANKS ==================== */
+  const bankForm = document.getElementById("bankForm");
+  if (bankForm) {
+    const modeEl    = document.getElementById("bank_mode");
+    const pkEl      = document.getElementById("bank_pk");
+    const idEl      = document.getElementById("bank_id_display");
+    const acronymEl = document.getElementById("bank_acronym");
+    const nameEl    = document.getElementById("bank_name");
+    const saveBtn   = document.getElementById("saveBtnBank");
+    const deleteBtn = document.getElementById("deleteBtnBank");
+    const clearBtn  = document.getElementById("clearBtnBank");
+    const NEXT_ID   = "{{ next_bank_id }}";
+    const CREATE_URL= "{% url 'bank_create' %}";
+    const acroErr   = document.getElementById("bank_acronym_err");
+    const nameErr   = document.getElementById("bank_name_err");
+
+    function resetBankForm() {
+      idEl.value = NEXT_ID; acronymEl.value = ""; nameEl.value = "";
+      [acronymEl, nameEl].forEach(el => { if (el) delete el.dataset.touched; });
+      showErr(acronymEl, acroErr, "", false); showErr(nameEl, nameErr, "", false);
     }
 
-    function bankFields() {
-        return [
-            { label: "ID", value: document.getElementById("bank_id_display")?.value || "" },
-            { label: "Acronym", value: document.getElementById("bank_acronym")?.value || "" },
-            { label: "Name", value: document.getElementById("bank_name")?.value || "" },
-        ];
-    }
+    const validation = wireFormValidation({
+      form: bankForm, saveBtn,
+      validators: [
+        s => validateRequiredText(acronymEl, acroErr, "Bank Acronym", 6,  RX.bankAcronym, s),
+        s => validateRequiredText(nameEl,    nameErr, "Bank Name",    50, RX.nameText, s),
+      ]
+    });
 
-    // ------------------ PRODUCTS ----------------
-    const productForm = document.getElementById("productForm");
-    if (productForm) {
-        const modeEl = document.getElementById("product_mode");
-        const pkEl = document.getElementById("product_pk");
-        const idEl = document.getElementById("product_id");
-        const codeEl = document.getElementById("product_code");
-        const descEl = document.getElementById("description");
-        const priceEl = document.getElementById("price");
-        const qtyEl = document.getElementById("quantity");
-        const statusEl = document.getElementById("status");
-        const saveBtn = document.getElementById("saveBtnProduct");
-        const deleteBtn = document.getElementById("deleteBtnProduct");
-        const clearBtn = document.getElementById("clearBtnProduct");
-        const NEXT_ID = "{{ next_product_id }}";
-        const CREATE_URL = "{% url 'product_create' %}";
+    acronymEl?.addEventListener("input", () => {
+      acronymEl.value = (acronymEl.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    });
 
-        const codeErr = document.getElementById("product_code_err");
-        const descErr = document.getElementById("product_description_err");
-        const priceErr = document.getElementById("product_price_err");
-        const qtyErr = document.getElementById("product_quantity_err");
+    const toCreate = () => {
+      resetBankForm();
+      setMode({ mode:"create", form:bankForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.bank_update });
+      validation?.runAll?.(false);
+    };
 
-        function resetForm() {
-            idEl.value = NEXT_ID;
-            codeEl.value = "";
-            descEl.value = "";
-            priceEl.value = "";
-            qtyEl.value = 0;
-            statusEl.value = "Active";
-            [codeEl, descEl, priceEl, qtyEl, statusEl].forEach(el => { if (el) delete el.dataset.touched; });
-            showErr(codeEl, codeErr, "", false);
-            showErr(descEl, descErr, "", false);
-            showErr(priceEl, priceErr, "", false);
-            showErr(qtyEl, qtyErr, "", false);
-        }
+    document.querySelectorAll(".bank-row").forEach(row => {
+      row.addEventListener("click", () => {
+        idEl.value = row.dataset.id; acronymEl.value = row.dataset.acronym || "";
+        nameEl.value = row.dataset.name || "";
+        [acronymEl, nameEl].forEach(el => { if (el) delete el.dataset.touched; });
+        setMode({ mode:"edit", form:bankForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.bank_update, pk:row.dataset.id });
+        validation?.runAll?.(false);
+      });
+    });
 
-        const validation = wireFormValidation({
-            form: productForm,
-            saveBtn,
-            validators: [
-                (show) => validateRequiredText(codeEl, codeErr, "Product Code", 10, RX.productCode, show),
-                (show) => validateRequiredText(descEl, descErr, "Description", 150, RX.nameText, show),
-                (show) => validateMoney(priceEl, priceErr, "Price", 0, 99999999.99, show),
-                (show) => validateIntRange(qtyEl, qtyErr, "Quantity", 0, 100000, show),
-                (show) => validateSelectNotEmpty(statusEl, null, "Status", show),
-            ]
-        });
+    clearBtn?.addEventListener("click", toCreate);
 
-        function toCreate() {
-            resetForm();
-            setMode({ mode:"create", form:productForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.product_update });
-            validation?.runAll?.(false);
-        }
+    bankForm.addEventListener("submit", e => {
+      e.preventDefault(); validation.setSubmitted(true);
+      if (!validation.runAll(true)) return;
+      const mode = modeEl.value || "create";
+      openConfirm({
+        question: mode === "create" ? "Do you want to save this new bank record?" : "Do you want to update this bank record?",
+        okText:"Save", fields:bankFields(), onOk:() => bankForm.submit()
+      });
+    });
+    deleteBtn?.addEventListener("click", () => {
+      const pk = pkEl.value; if (!pk) return;
+      openConfirm({ question:"Do you want to delete this bank record?", okText:"Delete", fields:bankFields(), onOk:() => postTo(buildUrl(URLS.bank_delete, pk)) });
+    });
+  }
 
-        document.querySelectorAll(".product-row").forEach(row => {
-            row.addEventListener("click", () => {
-                idEl.value = row.dataset.id;
-                codeEl.value = row.dataset.code || "";
-                descEl.value = row.dataset.description || "";
-                priceEl.value = row.dataset.price || "";
-                qtyEl.value = row.dataset.quantity || 0;
-                statusEl.value = row.dataset.status || "Active";
-                [codeEl, descEl, priceEl, qtyEl, statusEl].forEach(el => { if (el) delete el.dataset.touched; });
-                setMode({ mode:"edit", form:productForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.product_update, pk:row.dataset.id });
-                validation?.runAll?.(false);
-            });
-        });
-
-        clearBtn?.addEventListener("click", toCreate);
-
-        // Submit = validate -> confirm -> real submit
-        productForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            validation.setSubmitted(true);
-            const ok = validation.runAll(true);
-            if (!ok) return;
-
-            const mode = modeEl.value || "create";
-            openConfirm({
-                question: mode === "create"
-                    ? "Do you want to save and create this new product record?"
-                    : "Do you want to save and update this product record?",
-                okText: "Save",
-                fields: productFields(),
-                onOk: () => productForm.submit()
-            });
-        });
-
-        deleteBtn?.addEventListener("click", () => {
-            const pk = pkEl.value;
-            if (!pk) return;
-            openConfirm({
-                    question: "Do you want to delete this product record?",
-                    okText: "Delete",
-                    fields: productFields(),
-                    onOk: () => postTo(buildUrl(URLS.product_delete, pk))
-            });
-        });
-    }
-
-    // ---------------- CUSTOMERS ----------------
-    const customerForm = document.getElementById("customerForm");
-    if (customerForm) {
-        const modeEl = document.getElementById("customer_mode");
-        const pkEl = document.getElementById("customer_pk");
-        const idEl = document.getElementById("customer_id");
-        const nameEl = document.getElementById("customer_name");
-        const contactEl = document.getElementById("contact_person");
-        const phoneEl = document.getElementById("customer_phone");
-        const areaEl = document.getElementById("area");
-        const addrEl = document.getElementById("customer_address");
-        const saveBtn = document.getElementById("saveBtnCustomer");
-        const deleteBtn = document.getElementById("deleteBtnCustomer");
-        const clearBtn = document.getElementById("clearBtnCustomer");
-        const NEXT_ID = "{{ next_customer_id }}";
-        const CREATE_URL = "{% url 'customer_create' %}";
-
-        const nameErr = document.getElementById("customer_name_err");
-        const contactErr = document.getElementById("contact_person_err");
-        const phoneErr = document.getElementById("customer_phone_err");
-        const areaErr = document.getElementById("customer_area_err");
-        const addrErr = document.getElementById("customer_address_err");
-
-        function resetForm() {
-            idEl.value = NEXT_ID;
-            nameEl.value = "";
-            contactEl.value = "";
-            phoneEl.value = "";
-            addrEl.value = "";
-            areaEl.value = "No Selection";
-            [nameEl, contactEl, phoneEl, addrEl, areaEl].forEach(el => { if (el) delete el.dataset.touched; });
-            showErr(nameEl, nameErr, "", false);
-            showErr(contactEl, contactErr, "", false);
-            showErr(phoneEl, phoneErr, "", false);
-            showErr(areaEl, areaErr, "", false);
-            showErr(addrEl, addrErr, "", false);
-        }
-
-        const validation = wireFormValidation({
-            form: customerForm,
-            saveBtn,
-            validators: [
-                (show) => validateRequiredText(nameEl, nameErr, "Customer Name", 50, RX.nameText, show),
-                (show) => validateRequiredText(contactEl, contactErr, "Contact Person", 50, RX.nameText, show),
-                (show) => validatePhone(phoneEl, phoneErr, "Phone Number", show),
-                (show) => validateSelectNotEmpty(areaEl, areaErr, "Area", show),
-                (show) => validateRequiredText(addrEl, addrErr, "Address", 150, null, show),
-            ]
-        });
-
-        phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
-
-        function toCreate() {
-            resetForm();
-            setMode({ mode:"create", form:customerForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.customer_update });
-            validation?.runAll?.(false);
-        }
-
-        document.querySelectorAll(".customer-row").forEach(row => {
-            row.addEventListener("click", () => {
-                idEl.value = row.dataset.id;
-                nameEl.value = row.dataset.name || "";
-                contactEl.value = row.dataset.contact || "";
-                phoneEl.value = row.dataset.phone || "";
-                areaEl.value = row.dataset.area || "No Selection";
-                addrEl.value = row.dataset.address || "";
-                [nameEl, contactEl, phoneEl, addrEl, areaEl].forEach(el => { if (el) delete el.dataset.touched; });
-                setMode({ mode:"edit", form:customerForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.customer_update, pk:row.dataset.id });
-                validation?.runAll?.(false);
-            });
-        });
-
-        clearBtn?.addEventListener("click", toCreate);
-
-        customerForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            validation.setSubmitted(true);
-            const ok = validation.runAll(true);
-            if (!ok) return;
-
-            const mode = modeEl.value || "create";
-            openConfirm({
-                    question: mode === "create"
-                    ? "Do you want to save and create this new customer record?"
-                    : "Do you want to save and update this customer record?",
-                    okText: "Save",
-                    fields: customerFields(),
-                    onOk: () => customerForm.submit()
-            });
-        });
-
-        deleteBtn?.addEventListener("click", () => {
-            const pk = pkEl.value;
-            if (!pk) return;
-            openConfirm({
-                question: "Do you want to delete this customer record?",
-                okText: "Delete",
-                fields: customerFields(),
-                onOk: () => postTo(buildUrl(URLS.customer_delete, pk))
-            });
-        });
-    }
-
-    // ---------------- AGENTS ----------------
-    const agentForm = document.getElementById("agentForm");
-    if (agentForm) {
-        const modeEl = document.getElementById("agent_mode");
-        const pkEl = document.getElementById("agent_pk");
-        const idEl = document.getElementById("agent_id_display");
-        const nameEl = document.getElementById("agent_name");
-        const phoneEl = document.getElementById("agent_phone");
-        const saveBtn = document.getElementById("saveBtnAgent");
-        const deleteBtn = document.getElementById("deleteBtnAgent");
-        const clearBtn = document.getElementById("clearBtnAgent");
-        const NEXT_ID = "{{ next_agent_id }}";
-        const CREATE_URL = "{% url 'agent_create' %}";
-
-        const nameErr = document.getElementById("agent_name_err");
-        const phoneErr = document.getElementById("agent_phone_err");
-
-        function resetForm() {
-            idEl.value = NEXT_ID;
-            nameEl.value = "";
-            phoneEl.value = "";
-            [nameEl, phoneEl].forEach(el => { if (el) delete el.dataset.touched; });
-            showErr(nameEl, nameErr, "", false);
-            showErr(phoneEl, phoneErr, "", false);
-        }
-
-        const validation = wireFormValidation({
-            form: agentForm,
-            saveBtn,
-            validators: [
-                (show) => validateRequiredText(nameEl, nameErr, "Agent Name", 100, RX.nameText, show),
-                (show) => validatePhone(phoneEl, phoneErr, "Phone Number", show),
-            ]
-        });
-
-        phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
-
-        function toCreate() {
-            resetForm();
-            setMode({ mode:"create", form:agentForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.agent_update });
-            validation?.runAll?.(false);
-        }
-
-        document.querySelectorAll(".agent-row").forEach(row => {
-            row.addEventListener("click", () => {
-                idEl.value = row.dataset.id;
-                nameEl.value = row.dataset.name || "";
-                phoneEl.value = row.dataset.phone || "";
-                [nameEl, phoneEl].forEach(el => { if (el) delete el.dataset.touched; });
-                setMode({ mode:"edit", form:agentForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.agent_update, pk:row.dataset.id });
-                validation?.runAll?.(false);
-            });
-        });
-
-        clearBtn?.addEventListener("click", toCreate);
-
-        agentForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            validation.setSubmitted(true);
-            const ok = validation.runAll(true);
-            if (!ok) return;
-
-            const mode = modeEl.value || "create";
-            openConfirm({
-                question: mode === "create"
-                ? "Do you want to save and create this new agent record?"
-                : "Do you want to save and update this agent record?",
-                okText: "Save",
-                fields: agentFields(),
-                onOk: () => agentForm.submit()
-            });
-        });
-
-        deleteBtn?.addEventListener("click", () => {
-            const pk = pkEl.value;
-            if (!pk) return;
-            openConfirm({
-                question: "Do you want to delete this agent record?",
-                okText: "Delete",
-                fields: agentFields(),
-                onOk: () => postTo(buildUrl(URLS.agent_delete, pk))
-            });
-        });
-    }
-
-    // ---------------- BANKS ----------------
-    const bankForm = document.getElementById("bankForm");
-    if (bankForm) {
-        const modeEl = document.getElementById("bank_mode");
-        const pkEl = document.getElementById("bank_pk");
-        const idEl = document.getElementById("bank_id_display");
-        const acronymEl = document.getElementById("bank_acronym");
-        const nameEl = document.getElementById("bank_name");
-        const saveBtn = document.getElementById("saveBtnBank");
-        const deleteBtn = document.getElementById("deleteBtnBank");
-        const clearBtn = document.getElementById("clearBtnBank");
-        const NEXT_ID = "{{ next_bank_id }}";
-        const CREATE_URL = "{% url 'bank_create' %}";
-
-        const acroErr = document.getElementById("bank_acronym_err");
-        const nameErr = document.getElementById("bank_name_err");
-
-        function resetForm() {
-            idEl.value = NEXT_ID;
-            acronymEl.value = "";
-            nameEl.value = "";
-            [acronymEl, nameEl].forEach(el => { if (el) delete el.dataset.touched; });
-            showErr(acronymEl, acroErr, "", false);
-            showErr(nameEl, nameErr, "", false);
-        }
-
-        const validation = wireFormValidation({
-            form: bankForm,
-            saveBtn,
-            validators: [
-                (show) => validateRequiredText(acronymEl, acroErr, "Bank Acronym", 6, RX.bankAcronym, show),
-                (show) => validateRequiredText(nameEl, nameErr, "Bank Name", 50, RX.nameText, show),
-            ]
-        });
-
-        acronymEl?.addEventListener("input", () => {
-            acronymEl.value = (acronymEl.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-        });
-
-        function toCreate() {
-            resetForm();
-            setMode({ mode:"create", form:bankForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.bank_update });
-            validation?.runAll?.(false);
-        }
-
-        document.querySelectorAll(".bank-row").forEach(row => {
-            row.addEventListener("click", () => {
-                idEl.value = row.dataset.id;
-                acronymEl.value = row.dataset.acronym || "";
-                nameEl.value = row.dataset.name || "";
-                [acronymEl, nameEl].forEach(el => { if (el) delete el.dataset.touched; });
-                setMode({ mode:"edit", form:bankForm, saveBtn, deleteBtn, modeEl, pkEl, createUrl:CREATE_URL, updateUrlTemplate:URLS.bank_update, pk:row.dataset.id });
-                validation?.runAll?.(false);
-            });
-        });
-
-        clearBtn?.addEventListener("click", toCreate);
-
-        bankForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            validation.setSubmitted(true);
-            const ok = validation.runAll(true);
-            if (!ok) return;
-
-            const mode = modeEl.value || "create";
-            openConfirm({
-                question: mode === "create"
-                ? "Do you want to save and create this new bank record?"
-                : "Do you want to save and update this bank record?",
-                okText: "Save",
-                fields: bankFields(),
-                onOk: () => bankForm.submit()
-            });
-        });
-
-        deleteBtn?.addEventListener("click", () => {
-            const pk = pkEl.value;
-            if (!pk) return;
-            openConfirm({
-                question: "Do you want to delete this bank record?",
-                okText: "Delete",
-                fields: bankFields(),
-                onOk: () => postTo(buildUrl(URLS.bank_delete, pk))
-            });
-        });
-    }
 })();
 </script>
 

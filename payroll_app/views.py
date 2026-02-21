@@ -8,6 +8,13 @@ from .models import Agent, Bank, Customer, Product, next_padded_id
 def home_redirect(request):
     return redirect("main_page")
 
+def dev_login(request):
+    request.session["user_id"] = 1
+    return redirect("main_page")
+
+def dev_logout(request):
+    request.session.pop("user_id", None)
+    return redirect("main_page")
 
 def main_page(request):
     active_tab = request.GET.get("tab", "sales")

@@ -6,6 +6,10 @@ urlpatterns = [
     path("", views.home_redirect, name="home_redirect"),
     path("main/", views.main_page, name="main_page"),
 
+    # login
+    path("login/", views.dev_login, name="dev_login"),
+    path("logout/", views.dev_logout, name="dev_logout"),
+
     # Invoices (these fix your base.html links)
     path("create_invoice/", views.create_invoice, name="create_invoice"),
     path("sales_invoice/create/", views.sales_invoice_create, name="sales_invoice_create"),
