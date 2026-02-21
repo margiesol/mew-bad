@@ -88,8 +88,7 @@
 			<div class="pf-table-wrap">
 				<table class="pf-table">
 					<thead>
-				  	<tr>
-							<th style="width:80px;">ID</th>
+				  	    <tr>
 							<th style="width:110px;">Code</th>
 							<th class="col-desc">Description</th>
 							<th style="width:110px;">Quantity</th>
@@ -100,7 +99,6 @@
 					<tbody>
 						{% for product in products %}
 							<tr class="product-row" title="Click to edit" data-id="{{ product.product_id }}" data-code="{{ product.product_code }}" data-description="{{ product.description }}" data-price="{{ product.price }}" data-quantity="{{ product.quantity }}" data-status="{{ product.status }}">
-								<td class="col-id">{{ product.product_id }}</td>
 								<td>{{ product.product_code }}</td>
 								<td class="col-desc">{{ product.description }}</td>
 								<td>{{ product.quantity }}</td>
@@ -362,7 +360,6 @@
 				<table class="pf-table" style="min-width:500px;">
 					<thead>
 						<tr>
-							<th style="width:80px;">ID</th>
 							<th style="width:140px;">Code</th>
 							<th class="col-desc">Bank Name</th>
 						</tr>
@@ -370,7 +367,6 @@
 					<tbody>
 						{% for bank in banks %}
 							<tr class="bank-row" title="Click to edit" data-id="{{ bank.bank_id }}" data-acronym="{{ bank.bank_acronym }}" data-name="{{ bank.name }}">
-								<td class="col-id">{{ bank.bank_id }}</td>
 								<td>{{ bank.bank_acronym }}</td>
 								<td class="col-desc">{{ bank.name }}</td>
 							</tr>
