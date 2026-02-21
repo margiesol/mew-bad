@@ -1175,7 +1175,7 @@
 			const acroErr = document.getElementById("bank_acronym_err");
 			const nameErr = document.getElementById("bank_name_err");
 
-            const isSearching = !!(new URLSearchParams(window.location.search).get("acronym") ||
+            const isSearching = !!(new URLSearchParams(window.location.search).get("bank_acronym") ||
                                    new URLSearchParams(window.location.search).get("name"));
             if (isSearching) saveBtn.disabled = true;
 
