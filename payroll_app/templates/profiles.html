@@ -335,14 +335,14 @@
 						<label class="pf-label" for="bank_acronym">Acronym</label>
 						<div>
 							<div class="help-err" id="bank_acronym_err"></div>
-							<input type="text" class="pf-input" id="bank_acronym" name="bank_acronym" maxlength="6" autocomplete="off" placeholder="e.g. BDO">
+							<input type="text" class="pf-input" id="bank_acronym" name="bank_acronym" value="{{ request.GET.bank_acronym|default:'' }}" maxlength="6" autocomplete="off" placeholder="e.g. BDO">
 						</div>
 					</div>
 					<div class="pf-field" style="margin-bottom:0;">
 						<label class="pf-label" for="bank_name">Bank Name</label>
 						<div>
 							<div class="help-err" id="bank_name_err"></div>
-							<input type="text" class="pf-input" id="bank_name" name="name" maxlength="50" autocomplete="off" placeholder="Full bank name">
+							<input type="text" class="pf-input" id="bank_name" name="name" value="{{ request.GET.name|default:'' }}" maxlength="50" autocomplete="off" placeholder="Full bank name">
 						</div>
 					</div>
 				</div>
@@ -651,6 +651,12 @@
 			const qtyErr = document.getElementById("product_quantity_err");
             const statusErr = document.getElementById("product_status_err");
 
+            const isSearching = !!(new URLSearchParams(window.location.search).get("product_code") ||
+                                   new URLSearchParams(window.location.search).get("description") ||
+                                   new URLSearchParams(window.location.search).get("price") ||
+                                   new URLSearchParams(window.location.search).get("quantity") ||
+                                   new URLSearchParams(window.location.search).get("status"));
+            if (isSearching) saveBtn.disabled = true;
 
 			function resetProductForm() {
 				idEl.value = NEXT_ID;
@@ -668,8 +674,8 @@
 			}
 
 			const validation = wireFormValidation({
-				form: productForm,
-				saveBtn,
+                form: productForm,
+                saveBtn: saveBtn,
 				validators: [
 					s => validateRequiredText(codeEl, codeErr, "Product Code", 10, RX.productCode, s),
 					s => validateRequiredText(descEl, descErr, "Description", 150, RX.nameText, s),
@@ -678,6 +684,17 @@
                     s => validateSelectNotEmpty(statusEl, statusErr, "Status", s),
 				]
 			});
+
+            if (isSearching) {
+                saveBtn.disabled = true;
+                // Override the runAll function to keep button disabled
+                const originalRunAll = validation.runAll;
+                validation.runAll = function(show) {
+                    const result = originalRunAll.call(this, show);
+                    saveBtn.disabled = false;  // Force disable after validation
+                    return result;
+                };
+            }
 
 			const toCreate = () => {
 				resetProductForm();
@@ -794,6 +811,14 @@
 
 			const modeMsgEl = document.getElementById("customer_id_mode_msg");
 
+            const isSearching = !!(new URLSearchParams(window.location.search).get("name") ||
+                                   new URLSearchParams(window.location.search).get("contact_person") ||
+                                   new URLSearchParams(window.location.search).get("phone_no") ||
+                                   new URLSearchParams(window.location.search).get("area") ||
+                                   new URLSearchParams(window.location.search).get("address") ||
+                                   new URLSearchParams(window.location.search).get("customer_id"));
+            if (isSearching) saveBtn.disabled = true;
+
 			function setIdSearchMode(on) {
 				if (!idEl || !modeMsgEl) return;
 				idEl.classList.toggle("is-search-mode", !!on);
@@ -844,8 +869,8 @@
 			}
 
 			const validation = wireFormValidation({
-				form: customerForm,
-				saveBtn,
+                form: customerForm,
+                saveBtn: saveBtn,
 				validators: [
 					s => validateRequiredText(nameEl, nameErr, "Customer Name", 50, RX.nameText, s),
 					s => validateRequiredText(contactEl, contactErr, "Contact Person", 50, RX.nameText, s),
@@ -854,6 +879,16 @@
 					s => validateRequiredText(addrEl, addrErr, "Address", 150, null, s),
 				]
 			});
+
+            if (isSearching) {
+                saveBtn.disabled = true;
+                const originalRunAll = validation.runAll;
+                validation.runAll = function(show) {
+                    const result = originalRunAll.call(this, show);
+                    saveBtn.disabled = false;
+                    return result;
+                };
+            }
 
 			phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
 
@@ -969,6 +1004,11 @@
 
 			const modeMsgEl = document.getElementById("agent_id_mode_msg");
 
+            const isSearching = !!(new URLSearchParams(window.location.search).get("name") ||
+                                   new URLSearchParams(window.location.search).get("phone_no") ||
+                                   new URLSearchParams(window.location.search).get("agent_id"));
+            if (isSearching) saveBtn.disabled = true;
+
 			function setIdSearchMode(on) {
 				if (!idEl || !modeMsgEl) return;
 				idEl.classList.toggle("is-search-mode", !!on);
@@ -1016,13 +1056,23 @@
 			}
 
 			const validation = wireFormValidation({
-				form: agentForm,
-				saveBtn,
+                form: agentForm,
+                saveBtn: saveBtn,
 				validators: [
 					s => validateRequiredText(nameEl, nameErr, "Agent Name", 100, RX.nameText, s),
 					s => validatePhone(phoneEl, phoneErr, "Phone Number", s),
 				]
 			});
+
+            if (isSearching) {
+                saveBtn.disabled = true;
+                const originalRunAll = validation.runAll;
+                validation.runAll = function(show) {
+                    const result = originalRunAll.call(this, show);
+                    saveBtn.disabled = false;
+                    return result;
+                };
+            }
 
 			phoneEl?.addEventListener("input", () => autoFormatPhone(phoneEl));
 
@@ -1102,7 +1152,6 @@
 				const nameVal = trimVal(nameEl);
 				const phoneVal = trimVal(phoneEl);
 
-				if (idVal) params.set("agent_id", idVal);
                 if (idVal && idVal !== NEXT_ID) params.set("agent_id", idVal);
 				if (nameVal) params.set("name", nameVal);
 				if (phoneVal) params.set("phone_no", phoneVal);
@@ -1126,6 +1175,10 @@
 			const acroErr = document.getElementById("bank_acronym_err");
 			const nameErr = document.getElementById("bank_name_err");
 
+            const isSearching = !!(new URLSearchParams(window.location.search).get("acronym") ||
+                                   new URLSearchParams(window.location.search).get("name"));
+            if (isSearching) saveBtn.disabled = true;
+
 			function resetBankForm() {
 				acronymEl.value = "";
 				nameEl.value = "";
@@ -1137,13 +1190,23 @@
 			}
 
 			const validation = wireFormValidation({
-				form: bankForm,
-				saveBtn,
+                form: bankForm,
+                saveBtn: saveBtn,
 				validators: [
 					s => validateRequiredText(acronymEl, acroErr, "Bank Acronym", 6, RX.bankAcronym, s),
 					s => validateRequiredText(nameEl, nameErr, "Bank Name", 50, RX.nameText, s),
 				]
 			});
+
+            if (isSearching) {
+                saveBtn.disabled = true;
+                const originalRunAll = validation.runAll;
+                validation.runAll = function(show) {
+                    const result = originalRunAll.call(this, show);
+                    saveBtn.disabled = false;
+                    return result;
+                };
+            }
 
 			acronymEl?.addEventListener("input", () => {
 				acronymEl.value = (acronymEl.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
@@ -1186,7 +1249,9 @@
 				});
 			});
 
-			clearBtn?.addEventListener("click", toCreate);
+			clearBtn?.addEventListener("click", () => {
+                window.location.href = `${window.location.pathname}?tab=bank`;
+            });
 
 			bankForm.addEventListener("submit", e => {
 				e.preventDefault();
