@@ -78,6 +78,123 @@ def profiles(request):
     agents = Agent.objects.all().order_by("agent_id")
     banks = Bank.objects.all().order_by("bank_id")
 
+    # ADDED THIS FOR SEARCH
+    if active_tab == "product":
+        product_code = request.GET.get("product_code")
+        description = request.GET.get("description")
+        price_input = (request.GET.get("price") or "").strip()
+        quantity_input = (request.GET.get("quantity") or "").strip()
+        status = request.GET.get("status")
+
+        if product_code:
+            products = products.filter(product_code__icontains=product_code)
+        if description:
+            products = products.filter(description__icontains=description)
+        if price_input:
+            if '>' in price_input and '<' in price_input:
+                try:
+                    low = float(price_input.split('>')[1].split('<')[0].strip())
+                    high = float(price_input.split('<')[1].strip())
+                    products = products.filter(price__gte=low, price__lte=high)
+                except (ValueError, IndexError):
+                    pass
+            elif price_input.startswith('!='):
+                try:
+                    products = products.exclude(price=float(price_input[2:].strip()))
+                except ValueError:
+                    pass
+            elif price_input.startswith('>'):
+                try:
+                    products = products.filter(price__gte=float(price_input[1:].strip()))
+                except ValueError:
+                    pass
+            elif price_input.startswith('<'):
+                try:
+                    products = products.filter(price__lte=float(price_input[1:].strip()))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    products = products.filter(price=float(price_input))
+                except ValueError:
+                    pass
+        if quantity_input:
+            if '>' in quantity_input and '<' in quantity_input:
+                try:
+                    low = int(quantity_input.split('>')[1].split('<')[0].strip())
+                    high = int(quantity_input.split('<')[1].strip())
+                    products = products.filter(quantity__gte=low, quantity__lte=high)
+                except (ValueError, IndexError):
+                    pass
+            elif quantity_input.startswith('!='):
+                try:
+                    products = products.exclude(quantity=int(quantity_input[2:].strip()))
+                except ValueError:
+                    pass
+            elif quantity_input.startswith('>'):
+                try:
+                    products = products.filter(quantity__gte=int(quantity_input[1:].strip()))
+                except ValueError:
+                    pass
+            elif quantity_input.startswith('<'):
+                try:
+                    products = products.filter(quantity__lte=int(quantity_input[1:].strip()))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    products = products.filter(quantity=int(quantity_input))
+                except ValueError:
+                    pass
+        if status and status != "No Selection":
+            products = products.filter(status=status)
+
+    if active_tab == "customer":
+        customer_id = (request.GET.get("customer_id") or "").strip()
+        name = request.GET.get("name")
+        contact_person = request.GET.get("contact_person")
+        phone_no = (request.GET.get("phone_no") or "").strip()
+        area = request.GET.get("area")
+        address = request.GET.get("address")
+
+        # Build filter conditions
+        if customer_id:
+            customers = customers.filter(customer_id__icontains=customer_id)
+        if name:
+            customers = customers.filter(name__icontains=name)
+        if contact_person:
+            customers = customers.filter(contact_person__icontains=contact_person)
+        if phone_no:
+            customers = customers.filter(phone_no__icontains=phone_no)
+        if area and area != "No Selection":
+            customers = customers.filter(area=area)
+        if address:
+            customers = customers.filter(address__icontains=address)
+
+    if active_tab == "agent":
+        agent_id = (request.GET.get("agent_id") or "").strip()
+        name = request.GET.get("name")
+        phone_no = (request.GET.get("phone_no") or "").strip()
+
+        # Build filter conditions
+        if agent_id:
+            agents = agents.filter(agent_id__icontains=agent_id)
+        if name:
+            agents = agents.filter(name__icontains=name)
+        if phone_no:
+            agents = agents.filter(phone_no__icontains=phone_no)
+
+    if active_tab == "bank":
+        bank_acronym = request.GET.get("bank_acronym")
+        name = request.GET.get("name")
+
+        # Build filter conditions
+        if bank_acronym:
+            banks = banks.filter(bank_acronym__icontains=bank_acronym)
+        if name:
+            banks = banks.filter(name__icontains=name)
+    # ADDED UNTIL HERE ONLY FOR SEARCH  
+
     context = {
         "active_tab": active_tab,
         "products": products,
@@ -91,7 +208,6 @@ def profiles(request):
         "area_choices": Customer.AREA_CHOICES,
     }
     return render(request, "profiles.html", context)
-
 
 # ---------------- PRODUCTS ----------------
 def product_create(request):

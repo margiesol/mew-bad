@@ -257,12 +257,6 @@ main { padding: 0; }
   box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
 }
 
-.pf-input[readonly] {
-  background: #fff;        /* same as editable fields, no gray tint */
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
 .pf-input.is-invalid,
 .pf-select.is-invalid {
   border-color: #ef4444;
@@ -287,6 +281,24 @@ main { padding: 0; }
   margin-top: 3px;
 }
 .help-err.show { display: block; }
+
+.pf-input.is-search-mode {
+  border: 1px solid #eab308;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25);
+  background-color: #ffffff;
+}
+
+/* Yellow "Search mode" text */
+.search-hint {
+  display: none;
+  font-size: 12px;
+  margin-top: 3px;
+  color: #eab308;
+}
+
+.search-hint.show {
+  display: block;
+}
 
 /* ================= ACTION BUTTONS ROW ================= */
 .pf-actions {
