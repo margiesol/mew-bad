@@ -1,0 +1,925 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header_tabs %}
+<div class="tabs">
+    <a class="tab active" href="?tab=sales">Sales</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap inv-page">
+	<h1 class="page-title {% if is_deleted %}deleted-title{% endif %}">
+    {% if is_deleted %}Deleted Invoice{% elif is_update %}Update{% else %}Sales{% endif %} Invoice
+    </h1>
+
+    {% if is_deleted %}
+    <div class="deleted-banner">
+        DELETED INVOICE — This record is locked (read-only).
+    </div>
+    {% endif %}
+
+	<form method="POST" action="{% if is_update %}{% url 'sales_invoice_update' invoice.invoice_no %}{% else %}{% url 'sales_invoice_create' %}{% endif %}" id="salesInvoiceForm">
+		{% csrf_token %}
+		<input type="hidden" name="tab" value="sales">
+		<input type="hidden" id="paymentStatus" name="payment_status" value="paid">
+		<input type="hidden" id="actionType" name="action_type" value="save">
+
+		<!-- ================= Invoice Form Card ================= -->
+		<section class="inv-card">
+			<div class="inv-form-grid">
+				<div class="inv-col">
+					<div class="inv-field">
+						<label class="inv-label" for="salesInvoiceNumber">Invoice No.</label>
+						<input class="inv-input" type="text" id="salesInvoiceNumber" name="invoice_number"
+							value="{{ next_sales_invoice_no }}" {% if is_update %}readonly{% endif %} required>
+					</div>
+
+					<div class="inv-row-2">
+						<div class="inv-field">
+							<label class="inv-label" for="salesInvoiceDate">Date</label>
+							<input class="inv-input" type="text" id="salesInvoiceDate" name="invoice_date"
+								value="{% if is_update %}{{ invoice.date|date:'m/d/y' }}{% endif %}" placeholder="mm/dd/yy" autocomplete="off" required>
+						</div>
+						<div class="inv-field">
+							<label class="inv-label" for="plateNo">Plate No.</label>
+							<input class="inv-input" type="text" id="plateNo" name="plate_no" value="{% if is_update %}{{ invoice.plate_no }}{% endif %}">
+						</div>
+					</div>
+
+					<div class="inv-field">
+						<label class="inv-label" for="salesAgent">Sales Agent</label>
+						<select class="inv-select" id="salesAgent" name="sales_agent" required>
+							<option value="" selected>Select...</option>
+							{% for agent in agents %}
+								<option value="{{ agent.agent_id }}" {% if is_update and invoice.agent and invoice.agent.agent_id == agent.agent_id %}selected{% endif %}>{{ agent.name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+				</div>
+
+				<div class="inv-col">
+					<div class="inv-field">
+						<label class="inv-label" for="customerDropdown">Customer</label>
+						<select class="inv-select" id="customerDropdown" name="customer_code" required>
+							<option value="" selected>Select...</option>
+							{% for customer in customers %}
+								<option value="{{ customer.customer_id }}" {% if is_update and invoice.customer and invoice.customer.customer_id == customer.customer_id %}selected{% endif %}
+									data-address="{{ customer.address }}"
+									data-name="{{ customer.name }}">
+									{{ customer.customer_id }} - {{ customer.name }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+
+					<div class="inv-field">
+						<label class="inv-label" for="customerAddress">Address</label>
+						<input class="inv-input" type="text" id="customerAddress" name="customer_address" readonly value="{% if is_update and invoice.customer %}{{ invoice.customer.address }}{% endif %}">
+					</div>
+
+					<div class="invoice-mini-stats">
+						<div class="invoice-stat">
+							<div class="invoice-stat-label">Unpaid Invoices</div>
+							<div class="invoice-stat-value" id="unpaidInvoices">0</div>
+						</div>
+						<div class="invoice-stat">
+							<div class="invoice-stat-label">Post-dated Cheques</div>
+							<div class="invoice-stat-value" id="postDatedCheques">0</div>
+						</div>
+						<div class="invoice-stat">
+							<div class="invoice-stat-label">Bounced Cheques</div>
+							<div class="invoice-stat-value" id="bouncedCheques">0</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= Invoice Items ================= -->
+		<h2 class="inv-section-title">Order Record</h2>
+		<section class="inv-card">
+			<div class="inv-table-wrap">
+				<table class="inv-table" id="salesItemsTable">
+					<thead>
+						<tr>
+							<th class="t-center" style="width:120px">Code</th>
+							<th class="col-desc">Description</th>
+							<th class="t-center" style="width:90px">Qty</th>
+							<th class="t-center" style="width:90px">Unit</th>
+							<th class="t-right"  style="width:120px">Price</th>
+							<th class="t-center" style="width:90px">Rate</th>
+							<th class="t-right"  style="width:140px">Amount</th>
+						</tr>
+					</thead>
+					<tbody id="salesItemsTbody">
+						{% if is_update and invoice.order_records.all %}
+							{% for record in invoice.order_records.all %}
+							<tr>
+								<td class="t-center"><input class="inv-cell sales-code" name="items[{{ forloop.counter0 }}][code]" list="productCodeList" autocomplete="off" value="{{ record.product.product_code|default:'' }}"></td>
+								<td class="col-desc"><input class="inv-cell sales-desc" name="items[{{ forloop.counter0 }}][desc]" list="productDescList" autocomplete="off" value="{{ record.product.description|default:'' }}"></td>
+								<td class="t-center"><input class="inv-cell sales-qty" type="number" name="items[{{ forloop.counter0 }}][quantity]" value="{{ record.order_quantity }}" min="1"></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell sales-unit" name="items[{{ forloop.counter0 }}][unit]">
+										<option value="PC" {% if record.unit == 'PC' %}selected{% endif %}>PC</option>
+										<option value="PCS" {% if record.unit == 'PCS' %}selected{% endif %}>PCS</option>
+										<option value="BOX" {% if record.unit == 'BOX' %}selected{% endif %}>BOX</option>
+									</select>
+								</td>
+								<td class="t-right"><input class="inv-cell sales-price" name="items[{{ forloop.counter0 }}][price]" inputmode="decimal" value="{{ record.order_price_per_unit|floatformat:2 }}"></td>
+								<td class="t-center"><input class="inv-cell sales-rate" name="items[{{ forloop.counter0 }}][rate]" value="{{ record.rate }}" inputmode="decimal"></td>
+								<td class="t-right"><input class="inv-cell sales-amount" name="items[{{ forloop.counter0 }}][amount]" value="{{ record.total_price|floatformat:2 }}" readonly></td>
+							</tr>
+							{% endfor %}
+						{% else %}
+							<tr>
+								<td class="t-center"><input class="inv-cell sales-code" name="items[0][code]" list="productCodeList" autocomplete="off"></td>
+								<td class="col-desc"><input class="inv-cell sales-desc" name="items[0][desc]" list="productDescList" autocomplete="off"></td>
+								<td class="t-center"><input class="inv-cell sales-qty" type="number" name="items[0][quantity]" value="1" min="1"></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell sales-unit" name="items[0][unit]">
+										<option value="PC" selected>PC</option>
+										<option value="PCS">PCS</option>
+										<option value="BOX">BOX</option>
+									</select>
+								</td>
+								<td class="t-right"><input class="inv-cell sales-price" name="items[0][price]" inputmode="decimal"></td>
+								<td class="t-center"><input class="inv-cell sales-rate" name="items[0][rate]" value="1.00" inputmode="decimal"></td>
+								<td class="t-right"><input class="inv-cell sales-amount" name="items[0][amount]" readonly></td>
+							</tr>
+						{% endif %}
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<!-- ================= Returns ================= -->
+		<h2 class="inv-section-title">Return Record</h2>
+		<section class="inv-card">
+			<div class="inv-table-wrap">
+				<table class="inv-table" id="salesReturnsTable">
+					<thead>
+						<tr>
+							<th class="t-center" style="width:120px">Code</th>
+							<th class="col-desc">Description</th>
+							<th class="t-center" style="width:90px">Qty</th>
+							<th class="t-center" style="width:90px">Unit</th>
+							<th class="t-right"  style="width:120px">Price</th>
+							<th class="t-center" style="width:90px">Rate</th>
+							<th class="t-right"  style="width:140px">Amount</th>
+						</tr>
+					</thead>
+					<tbody id="salesReturnsTbody">
+						{% if is_update and invoice.return_records.all %}
+							{% for record in invoice.return_records.all %}
+							<tr>
+								<td class="t-center"><input class="inv-cell returns-code" name="returns[{{ forloop.counter0 }}][code]" list="returnsProductList" autocomplete="off" value="{{ record.product.product_code|default:'' }}"></td>
+								<td class="col-desc"><input class="inv-cell returns-desc" name="returns[{{ forloop.counter0 }}][desc]" autocomplete="off" value="{{ record.product.description|default:'' }}"></td>
+								<td class="t-center"><input class="inv-cell returns-qty" type="number" name="returns[{{ forloop.counter0 }}][quantity]" value="{{ record.return_quantity }}" min="1"></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell returns-unit" name="returns[{{ forloop.counter0 }}][unit]">
+										<option value="PC" {% if record.unit == 'PC' %}selected{% endif %}>PC</option>
+										<option value="PCS" {% if record.unit == 'PCS' %}selected{% endif %}>PCS</option>
+										<option value="BOX" {% if record.unit == 'BOX' %}selected{% endif %}>BOX</option>
+									</select>
+								</td>
+								<td class="t-right"><input class="inv-cell returns-price" name="returns[{{ forloop.counter0 }}][price]" inputmode="decimal" value="{{ record.return_price_per_unit|floatformat:2 }}"></td>
+								<td class="t-center"><input class="inv-cell returns-rate" name="returns[{{ forloop.counter0 }}][rate]" value="{{ record.rate }}" inputmode="decimal"></td>
+								<td class="t-right"><input class="inv-cell returns-amount" name="returns[{{ forloop.counter0 }}][amount]" value="{{ record.total_price|floatformat:2 }}" readonly></td>
+							</tr>
+							{% endfor %}
+						{% else %}
+							<tr>
+								<td class="t-center"><input class="inv-cell returns-code" name="returns[0][code]" list="returnsProductList" autocomplete="off"></td>
+								<td class="col-desc"><input class="inv-cell returns-desc" name="returns[0][desc]" autocomplete="off"></td>
+								<td class="t-center"><input class="inv-cell returns-qty" type="number" name="returns[0][quantity]" value="1" min="1"></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell returns-unit" name="returns[0][unit]">
+										<option value="PC" selected>PC</option>
+										<option value="PCS">PCS</option>
+										<option value="BOX">BOX</option>
+									</select>
+								</td>
+								<td class="t-right"><input class="inv-cell returns-price" name="returns[0][price]" inputmode="decimal"></td>
+								<td class="t-center"><input class="inv-cell returns-rate" name="returns[0][rate]" value="1.00" inputmode="decimal"></td>
+								<td class="t-right"><input class="inv-cell returns-amount" name="returns[0][amount]" readonly></td>
+							</tr>
+						{% endif %}
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<!-- ================= Payments ================= -->
+		<h2 class="inv-section-title">Payment Record</h2>
+		<section class="inv-card">
+			<div class="inv-table-wrap">
+				<table class="inv-table" id="salesPaymentsTable">
+					<thead>
+						<tr>
+							<th class="t-center" style="width:120px">Type</th>
+							<th style="width:140px">Bank</th>
+							<th style="width:160px">Cheque No.</th>
+							<th class="t-right"  style="width:130px">Amount</th>
+							<th class="t-center" style="width:130px">Date</th>
+							<th class="t-center" style="width:80px">Days</th>
+							<th class="t-center" style="width:120px">Status</th>
+						</tr>
+					</thead>
+					<tbody id="salesPaymentsTbody">
+						{% if is_update and invoice.payment_records.all %}
+							{% for record in invoice.payment_records.all %}
+							<tr>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell pay-type" name="payments[{{ forloop.counter0 }}][type]">
+										<option value="cash" {% if record.payment_type == 'Cash' %}selected{% endif %}>Cash</option>
+										<option value="cheque" {% if record.payment_type == 'Cheque' %}selected{% endif %}>Cheque</option>
+									</select>
+								</td>
+								<td><input class="inv-cell pay-bank" name="payments[{{ forloop.counter0 }}][bank]" list="bankList" autocomplete="off" placeholder="Type or select" value="{% if record.cheque_detail %}{{ record.cheque_detail.bank.bank_acronym }}{% endif %}"></td>
+								<td><input class="inv-cell pay-cheque" name="payments[{{ forloop.counter0 }}][cheque_no]" autocomplete="off" value="{% if record.cheque_detail %}{{ record.cheque_detail.cheque_no }}{% endif %}"></td>
+								<td class="t-right"><input class="inv-cell pay-amount" name="payments[{{ forloop.counter0 }}][amount]" inputmode="decimal" value="{{ record.amount|floatformat:2 }}"></td>
+								<td class="t-center"><input class="inv-cell pay-date" name="payments[{{ forloop.counter0 }}][date]" placeholder="mm/dd/yy" autocomplete="off" value="{{ record.payment_date|date:'m/d/y' }}"></td>
+								<td class="t-center"><input class="inv-cell pay-days" name="payments[{{ forloop.counter0 }}][days]" readonly></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell pay-status" name="payments[{{ forloop.counter0 }}][status]">
+										<option value="valid" {% if not record.cheque_detail or record.cheque_detail.status == 'valid' %}selected{% endif %}>Valid</option>
+										<option value="bounced" {% if record.cheque_detail and record.cheque_detail.status == 'bounced' %}selected{% endif %}>Bounced</option>
+									</select>
+								</td>
+							</tr>
+							{% endfor %}
+						{% else %}
+							<tr>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell pay-type" name="payments[0][type]">
+										<option value="cash" selected>Cash</option>
+										<option value="cheque">Cheque</option>
+									</select>
+								</td>
+								<td><input class="inv-cell pay-bank" name="payments[0][bank]" list="bankList" autocomplete="off" placeholder="Type or select"></td>
+								<td><input class="inv-cell pay-cheque" name="payments[0][cheque_no]" autocomplete="off"></td>
+								<td class="t-right"><input class="inv-cell pay-amount" name="payments[0][amount]" inputmode="decimal"></td>
+								<td class="t-center"><input class="inv-cell pay-date" name="payments[0][date]" placeholder="mm/dd/yy" autocomplete="off"></td>
+								<td class="t-center"><input class="inv-cell pay-days" name="payments[0][days]" readonly></td>
+								<td class="t-center">
+									<select class="inv-cell inv-select-cell pay-status" name="payments[0][status]">
+										<option value="valid" selected>Valid</option>
+										<option value="bounced">Bounced</option>
+									</select>
+								</td>
+							</tr>
+						{% endif %}
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<!-- ================= Invoice Summary ================= -->
+		<h2 class="inv-section-title">Invoice Summary</h2>
+		<section class="inv-card">
+			<div class="inv-summary-grid">
+				<div class="inv-summary-left">
+					<div class="inv-field-2">
+						<label class="inv-label" for="received">Received</label>
+						<input type="checkbox" id="received" name="received" {% if is_update and invoice.delivery_status %}checked{% endif %}>
+						<label class="inv-label" for="terms">Terms</label>
+						<select class="inv-select" id="terms" name="terms">
+							<option value="">Select Terms</option>
+							<option value="30" {% if is_update and invoice.terms == '30' %}selected{% endif %}>30 Days</option>
+							<option value="60" {% if is_update and invoice.terms == '60' %}selected{% endif %}>60 Days</option>
+							<option value="90" {% if is_update and invoice.terms == '90' %}selected{% endif %}>90 Days</option>
+						</select>
+					</div>
+
+					<div class="inv-field" style="align-items: flex-start;">
+						<label class="inv-label" style="padding-top: 8px;" for="notes">Notes</label>
+						<textarea class="inv-textarea" id="notes" name="notes" rows="2">{% if is_update %}{{ invoice.remarks }}{% endif %}</textarea>
+					</div>
+
+					<div class="inv-field">
+						<label class="inv-label" for="discountSummary">Discount</label>
+						<input class="inv-input t-right" type="text" id="discountSummary"
+							name="discount_summary" placeholder="0.00" value="{% if is_update %}{{ invoice.discount|floatformat:2 }}{% endif %}">
+					</div>
+				</div>
+
+				<div class="inv-summary-right">
+					<div class="inv-total-row">
+						<div class="inv-total-label">Grand Total</div>
+						<div class="inv-total-value" id="grandTotalDisplay">{% if is_update %}{{ invoice.grand_total|floatformat:2 }}{% else %}0.00{% endif %}</div>
+					</div>
+
+					<div class="inv-total-row">
+						<div class="inv-total-label">Partial Payment</div>
+						<div class="inv-total-value" id="partialPaymentDisplay">{% if is_update %}{{ invoice.partial_payment|floatformat:2 }}{% else %}0.00{% endif %}</div>
+					</div>
+
+					<div class="inv-total-divider"></div>
+
+					<div class="inv-total-row inv-total-due">
+						<div class="inv-total-label">Amount Due</div>
+						<div class="inv-total-value" id="amountDueDisplay">{% if is_update %}{{ invoice.remaining_balance|floatformat:2 }}{% else %}0.00{% endif %}</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="inv-actions">
+				<button type="button" class="inv-btn inv-btn-clear"  id="btnClear">Clear</button>
+				<button type="button" class="inv-btn inv-btn-print"  id="btnPrint">Print</button>
+				<button type="submit" class="inv-btn inv-btn-save"   id="btnSave">{% if is_update %}Update{% else %}Save{% endif %}</button>
+				<button type="button" class="inv-btn inv-btn-delete" id="btnDelete">Delete</button>
+			</div>
+		</section>
+	</form>
+
+	<!-- Product data -->
+	<div id="productData" hidden>
+		{% for product in products %}
+			<div class="product"
+				data-code="{{ product.product_code }}"
+				data-desc="{{ product.description }}"
+				data-price="{{ product.price }}"
+				data-unit="{{ product.unit|default:'PC' }}">
+			</div>
+		{% endfor %}
+	</div>
+
+	<datalist id="productCodeList">
+		{% for product in products %}
+			<option value="{{ product.product_code }}">{{ product.description }}</option>
+		{% endfor %}
+	</datalist>
+
+	<datalist id="productDescList">
+		{% for product in products %}
+			<option value="{{ product.description }}">{{ product.product_code }}</option>
+		{% endfor %}
+	</datalist>
+
+	<datalist id="returnsProductList"></datalist>
+
+    <!-- Bank data -->
+    <div id="bankData" hidden>
+        {% for bank in banks %}
+            <div class="bank"
+                data-id="{{ bank.bank_id }}"
+                data-acronym="{{ bank.bank_acronym }}"
+                data-name="{{ bank.name }}">
+            </div>
+        {% endfor %}
+    </div>
+
+    <datalist id="bankList">
+        {% for bank in banks %}
+            <option value="{{ bank.bank_acronym }}">{{ bank.name }}</option>
+        {% endfor %}
+    </datalist>
+</div>
+
+<script>
+(function () {
+	/* ── Utilities ── */
+	function fmt(num) {
+		if (num === "" || num == null) return "0.00";
+		const n = parseFloat(num);
+		return isNaN(n) ? "0.00" : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	}
+
+	function raw(str) {
+		if (!str) return 0;
+		const n = parseFloat(String(str).replace(/,/g, ""));
+		return isNaN(n) ? 0 : n;
+	}
+
+	function parseDate(input) {
+		if (!input || !input.trim()) return "";
+		input = input.trim().replace(/[^\d/\-]/g, "");
+		const today = new Date();
+		const cy = today.getFullYear();
+		let date;
+
+		if (input.includes("/")) {
+			const p = input.split("/");
+			if (p.length >= 2) {
+				let m = parseInt(p[0], 10);
+				let d = parseInt(p[1], 10);
+				let y = p.length === 3 ? parseInt(p[2], 10) : cy;
+				if (y < 100) y = 2000 + y;
+				if (m < 1 || m > 12) m = today.getMonth() + 1;
+				const maxD = new Date(y, m, 0).getDate();
+				if (d < 1 || d > maxD) d = today.getDate();
+				date = new Date(y, m - 1, d);
+			}
+		} else if (input.length === 6 || input.length === 8) {
+			let m = parseInt(input.slice(0, 2), 10);
+			let d = parseInt(input.slice(2, 4), 10);
+			let y = input.length === 6 ? 2000 + parseInt(input.slice(4, 6), 10) : parseInt(input.slice(4, 8), 10);
+			if (m < 1 || m > 12) m = today.getMonth() + 1;
+			const maxD = new Date(y, m, 0).getDate();
+			if (d < 1 || d > maxD) d = today.getDate();
+			date = new Date(y, m - 1, d);
+		}
+
+		if (date && !isNaN(date.getTime())) {
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const dd = String(date.getDate()).padStart(2, "0");
+			return `${mm}/${dd}/${date.getFullYear()}`;
+		}
+		return input;
+	}
+
+	/* ── Product data ── */
+	function loadProducts() {
+		const dict = {};
+		document.querySelectorAll("#productData .product").forEach(el => {
+			const code = el.getAttribute("data-code");
+			dict[code] = {
+				description: el.getAttribute("data-desc") || "",
+				price: parseFloat(el.getAttribute("data-price")) || 0,
+				unit: el.getAttribute("data-unit") || "PC",
+			};
+		});
+		return dict;
+	}
+
+	const products = loadProducts();
+	let invoiceDate = new Date();
+	let invoiceProducts = {};
+
+	const salesItemsTbody    = document.getElementById("salesItemsTbody");
+	const salesReturnsTbody  = document.getElementById("salesReturnsTbody");
+	const salesPaymentsTbody = document.getElementById("salesPaymentsTbody");
+	const salesInvoiceDate   = document.getElementById("salesInvoiceDate");
+	const customerDropdown   = document.getElementById("customerDropdown");
+	const customerAddress    = document.getElementById("customerAddress");
+	const discountSummary    = document.getElementById("discountSummary");
+	const grandTotalDisplay      = document.getElementById("grandTotalDisplay");
+	const partialPaymentDisplay  = document.getElementById("partialPaymentDisplay");
+	const amountDueDisplay       = document.getElementById("amountDueDisplay");
+
+	/* ── Wire all existing rows ── */
+	function wireAllRows() {
+		// Wire sales rows
+		document.querySelectorAll("#salesItemsTbody tr").forEach(tr => {
+			wireSalesRow(tr);
+		});
+		
+		// Wire returns rows
+		document.querySelectorAll("#salesReturnsTbody tr").forEach(tr => {
+			wireReturnsRow(tr);
+		});
+		
+		// Wire payment rows
+		document.querySelectorAll("#salesPaymentsTbody tr").forEach(tr => {
+			wirePaymentRow(tr);
+			updatePaymentRowState(tr);
+		});
+	}
+
+	/* ── Add new row functions ── */
+	function addSalesRow() {
+		const idx = salesItemsTbody.children.length;
+		const tr = document.createElement("tr");
+		tr.innerHTML = `
+			<td class="t-center"><input class="inv-cell sales-code" name="items[${idx}][code]" list="productCodeList" autocomplete="off"></td>
+			<td class="col-desc"><input class="inv-cell sales-desc" name="items[${idx}][desc]" list="productDescList" autocomplete="off"></td>
+			<td class="t-center"><input class="inv-cell sales-qty" type="number" name="items[${idx}][quantity]" value="1" min="1"></td>
+			<td class="t-center">
+				<select class="inv-cell inv-select-cell sales-unit" name="items[${idx}][unit]">
+					<option value="PC" selected>PC</option>
+					<option value="PCS">PCS</option>
+					<option value="BOX">BOX</option>
+				</select>
+			</td>
+			<td class="t-right"><input class="inv-cell sales-price" name="items[${idx}][price]" inputmode="decimal"></td>
+			<td class="t-center"><input class="inv-cell sales-rate" name="items[${idx}][rate]" value="1.00" inputmode="decimal"></td>
+			<td class="t-right"><input class="inv-cell sales-amount" name="items[${idx}][amount]" readonly></td>
+		`;
+		salesItemsTbody.appendChild(tr);
+		wireSalesRow(tr);
+	}
+
+	function addReturnsRow() {
+		const idx = salesReturnsTbody.children.length;
+		const tr = document.createElement("tr");
+		tr.innerHTML = `
+			<td class="t-center"><input class="inv-cell returns-code" name="returns[${idx}][code]" list="returnsProductList" autocomplete="off"></td>
+			<td class="col-desc"><input class="inv-cell returns-desc" name="returns[${idx}][desc]" autocomplete="off"></td>
+			<td class="t-center"><input class="inv-cell returns-qty" type="number" name="returns[${idx}][quantity]" value="1" min="1"></td>
+			<td class="t-center">
+				<select class="inv-cell inv-select-cell returns-unit" name="returns[${idx}][unit]">
+					<option value="PC" selected>PC</option>
+					<option value="PCS">PCS</option>
+					<option value="BOX">BOX</option>
+				</select>
+			</td>
+			<td class="t-right"><input class="inv-cell returns-price" name="returns[${idx}][price]" inputmode="decimal"></td>
+			<td class="t-center"><input class="inv-cell returns-rate" name="returns[${idx}][rate]" value="1.00" inputmode="decimal"></td>
+			<td class="t-right"><input class="inv-cell returns-amount" name="returns[${idx}][amount]" readonly></td>
+		`;
+		salesReturnsTbody.appendChild(tr);
+		wireReturnsRow(tr);
+	}
+
+	function addPaymentRow() {
+		const idx = salesPaymentsTbody.children.length;
+		const tr = document.createElement("tr");
+		tr.innerHTML = `
+			<td class="t-center">
+				<select class="inv-cell inv-select-cell pay-type" name="payments[${idx}][type]">
+					<option value="cash" selected>Cash</option>
+					<option value="cheque">Cheque</option>
+				</select>
+			</td>
+			<td><input class="inv-cell pay-bank" name="payments[${idx}][bank]" list="bankList" autocomplete="off" placeholder="Type or select"></td>
+			<td><input class="inv-cell pay-cheque" name="payments[${idx}][cheque_no]" autocomplete="off"></td>
+			<td class="t-right"><input class="inv-cell pay-amount" name="payments[${idx}][amount]" inputmode="decimal"></td>
+			<td class="t-center"><input class="inv-cell pay-date" name="payments[${idx}][date]" placeholder="mm/dd/yy" autocomplete="off"></td>
+			<td class="t-center"><input class="inv-cell pay-days" name="payments[${idx}][days]" readonly></td>
+			<td class="t-center">
+				<select class="inv-cell inv-select-cell pay-status" name="payments[${idx}][status]">
+					<option value="valid" selected>Valid</option>
+					<option value="bounced">Bounced</option>
+				</select>
+			</td>
+		`;
+		salesPaymentsTbody.appendChild(tr);
+		wirePaymentRow(tr);
+		updatePaymentRowState(tr);
+	}
+
+	/* ── Payment row functions ── */
+	function updatePaymentRowState(tr) {
+		const type = tr.querySelector(".pay-type").value;
+		const bank = tr.querySelector(".pay-bank");
+		const cheque = tr.querySelector(".pay-cheque");
+		const status = tr.querySelector(".pay-status");
+		
+		if (type === "cash") {
+			bank.value = "";
+			cheque.value = "";
+			bank.readOnly = true;
+			bank.placeholder = "N/A for cash";
+			cheque.readOnly = true;
+			status.value = "valid";
+			status.disabled = true;
+		} else {
+			bank.readOnly = false;
+			bank.placeholder = "Type or select bank";
+			cheque.readOnly = false;
+			status.disabled = false;
+		}
+	}
+
+	function wirePaymentRow(tr) {
+		const type = tr.querySelector(".pay-type");
+		const amt = tr.querySelector(".pay-amount");
+		const date = tr.querySelector(".pay-date");
+		const status = tr.querySelector(".pay-status");
+		const bank = tr.querySelector(".pay-bank");
+
+		wireMoneyInput(amt, updateSummary);
+
+		bank.addEventListener("input", function() {
+			const bankData = document.querySelectorAll("#bankData .bank");
+			const selectedValue = this.value;
+			
+			bankData.forEach(b => {
+				const acronym = b.getAttribute("data-acronym");
+				if (acronym && selectedValue.includes(acronym)) {
+					this.setAttribute("data-bank-id", b.getAttribute("data-id"));
+				}
+			});
+		});
+
+		type.addEventListener("change", () => { 
+			updatePaymentRowState(tr); 
+			updatePaymentDays(tr); 
+			updateSummary(); 
+		});
+		
+		status.addEventListener("change", updateSummary);
+
+		date.addEventListener("blur", () => {
+			const f = parseDate(date.value);
+			if (f) date.value = f;
+			updatePaymentDays(tr);
+			updateSummary();
+		});
+
+		wireTabAddRow(tr, "input, select", addPaymentRow);
+	}
+
+	/* ── Wiring helpers ── */
+	function wireMoneyInput(el, afterBlur) {
+		el.addEventListener("focus", () => { const v = raw(el.value); el.value = v ? String(v) : ""; });
+		el.addEventListener("blur",  () => { const v = parseFloat(el.value); el.value = v ? fmt(v) : ""; afterBlur && afterBlur(); });
+	}
+
+	function wireTabAddRow(tr, selector, addRowFn) {
+		const fields = Array.from(tr.querySelectorAll(selector));
+		if (!fields.length) return;
+		fields.forEach((el, i) => {
+			el.addEventListener("keydown", e => {
+				if (e.key !== "Tab" || i !== fields.length - 1) return;
+				e.preventDefault();
+				addRowFn();
+				const newRow = tr.parentElement.lastElementChild;
+				const first  = newRow.querySelector(selector);
+				if (first) first.focus();
+			});
+		});
+	}
+
+	/* ── Sales row wiring ── */
+	function wireSalesRow(tr) {
+		const code = tr.querySelector(".sales-code");
+		const desc = tr.querySelector(".sales-desc");
+		const qty = tr.querySelector(".sales-qty");
+		const unit = tr.querySelector(".sales-unit");
+		const price = tr.querySelector(".sales-price");
+		const rate = tr.querySelector(".sales-rate");
+
+		wireMoneyInput(price, () => { calcSalesAmount(tr); updateReturnsProductList(); updateSummary(); });
+		wireMoneyInput(rate,  () => { calcSalesAmount(tr); updateReturnsProductList(); updateSummary(); });
+
+		code.addEventListener("input", () => {
+			const key = code.value.trim();
+			if (!key) { desc.value = ""; price.value = ""; calcSalesAmount(tr); updateReturnsProductList(); updateSummary(); return; }
+			if (products[key]) {
+				desc.value = products[key].description;
+				if (!raw(price.value)) price.value = fmt(products[key].price);
+				calcSalesAmount(tr); updateReturnsProductList(); updateSummary();
+			}
+		});
+
+		desc.addEventListener("input", () => {
+			const s = desc.value.toLowerCase().trim();
+			if (!s) { code.value = ""; price.value = ""; calcSalesAmount(tr); updateReturnsProductList(); updateSummary(); return; }
+			for (const k in products) {
+				if ((products[k].description || "").toLowerCase().includes(s)) {
+					code.value = k;
+					if (!raw(price.value)) price.value = fmt(products[k].price);
+					calcSalesAmount(tr); updateReturnsProductList(); updateSummary();
+					break;
+				}
+			}
+		});
+
+		qty.addEventListener("input", () => {
+			const q = parseInt(qty.value || "1", 10);
+			if (q > 1 && unit.value === "PC")  unit.value = "PCS";
+			if (q === 1 && unit.value === "PCS") unit.value = "PC";
+			calcSalesAmount(tr); updateReturnsProductList(); updateSummary();
+		});
+
+		unit.addEventListener("change", () => { calcSalesAmount(tr); updateReturnsProductList(); updateSummary(); });
+
+		wireTabAddRow(tr, "input, select", addSalesRow);
+	}
+
+	/* ── Returns row wiring ── */
+	function wireReturnsRow(tr) {
+		const code = tr.querySelector(".returns-code");
+		const desc = tr.querySelector(".returns-desc");
+		const qty = tr.querySelector(".returns-qty");
+		const unit = tr.querySelector(".returns-unit");
+		const price = tr.querySelector(".returns-price");
+		const rate = tr.querySelector(".returns-rate");
+
+		wireMoneyInput(price, () => { calcReturnsAmount(tr); updateSummary(); });
+		wireMoneyInput(rate,  () => { calcReturnsAmount(tr); updateSummary(); });
+
+		code.addEventListener("input", () => {
+			const k = code.value.trim();
+			if (!k || !invoiceProducts[k]) { desc.value = ""; price.value = ""; calcReturnsAmount(tr); updateSummary(); return; }
+			desc.value  = invoiceProducts[k].description;
+			price.value = fmt(invoiceProducts[k].price);
+			qty.max     = invoiceProducts[k].maxQuantity || "";
+			unit.value  = invoiceProducts[k].unit || "PC";
+			calcReturnsAmount(tr); updateSummary();
+		});
+
+		desc.addEventListener("input", () => {
+			const s = desc.value.toLowerCase().trim();
+			if (!s) { code.value = ""; price.value = ""; calcReturnsAmount(tr); updateSummary(); return; }
+			for (const k in invoiceProducts) {
+				if ((invoiceProducts[k].description || "").toLowerCase().includes(s)) {
+					code.value  = k;
+					price.value = fmt(invoiceProducts[k].price);
+					qty.max     = invoiceProducts[k].maxQuantity || "";
+					unit.value  = invoiceProducts[k].unit || "PC";
+					calcReturnsAmount(tr); updateSummary();
+					break;
+				}
+			}
+		});
+
+		qty.addEventListener("input", () => {
+			const max = parseInt(qty.max || "0", 10);
+			const v   = parseInt(qty.value || "0", 10);
+			if (max && v > max) qty.value = max;
+			const q = parseInt(qty.value || "1", 10);
+			if (q > 1 && unit.value === "PC")  unit.value = "PCS";
+			if (q === 1 && unit.value === "PCS") unit.value = "PC";
+			calcReturnsAmount(tr); updateSummary();
+		});
+
+		wireTabAddRow(tr, "input, select", addReturnsRow);
+	}
+
+	/* ── Calculations ── */
+	function calcSalesAmount(tr) {
+		const qty   = parseFloat(tr.querySelector(".sales-qty").value)   || 0;
+		const price = raw(tr.querySelector(".sales-price").value);
+		const rate  = raw(tr.querySelector(".sales-rate").value)         || 1;
+		const amt   = qty * price * rate;
+		tr.querySelector(".sales-amount").value = amt ? fmt(amt) : "";
+	}
+
+	function calcReturnsAmount(tr) {
+		const qty   = parseFloat(tr.querySelector(".returns-qty").value)   || 0;
+		const price = raw(tr.querySelector(".returns-price").value);
+		const rate  = raw(tr.querySelector(".returns-rate").value)          || 1;
+		const amt   = qty * price * rate;
+		tr.querySelector(".returns-amount").value = amt ? fmt(amt) : "";
+	}
+
+	function updateReturnsProductList() {
+		invoiceProducts = {};
+		const list = document.getElementById("returnsProductList");
+		list.innerHTML = "";
+		document.querySelectorAll("#salesItemsTbody tr").forEach(row => {
+			const code  = row.querySelector(".sales-code").value.trim();
+			const desc  = row.querySelector(".sales-desc").value.trim();
+			const price = raw(row.querySelector(".sales-price").value);
+			const unit  = row.querySelector(".sales-unit").value;
+			const qty   = parseInt(row.querySelector(".sales-qty").value || "0", 10);
+			if (code && desc) {
+				invoiceProducts[code] = { description: desc, price, unit, maxQuantity: qty };
+				const opt = document.createElement("option");
+				opt.value = code;
+				opt.textContent = `${code} - ${desc}`;
+				list.appendChild(opt);
+			}
+		});
+	}
+
+	function updatePaymentDays(tr) {
+		const dateStr = tr.querySelector(".pay-date").value;
+		const daysEl  = tr.querySelector(".pay-days");
+		if (!dateStr || !invoiceDate) { daysEl.value = ""; return; }
+		const d = new Date(parseDate(dateStr));
+		if (isNaN(d.getTime())) { daysEl.value = ""; return; }
+		const diff = Math.ceil((d.getTime() - invoiceDate.getTime()) / 86400000);
+		daysEl.value = diff >= 0 ? diff : 0;
+	}
+
+	function updateSummary() {
+		let invoiceTotal = 0;
+		document.querySelectorAll("#salesItemsTbody .sales-amount").forEach(el => invoiceTotal += raw(el.value));
+		let returnsTotal = 0;
+		document.querySelectorAll("#salesReturnsTbody .returns-amount").forEach(el => returnsTotal += raw(el.value));
+
+		const net      = invoiceTotal - returnsTotal;
+		const discount = raw(discountSummary.value);
+		const grand    = net - discount;
+
+		let partial = 0;
+		document.querySelectorAll("#salesPaymentsTbody tr").forEach(tr => {
+			if (tr.querySelector(".pay-status").value === "valid")
+				partial += raw(tr.querySelector(".pay-amount").value);
+		});
+
+		const due = grand - partial;
+		grandTotalDisplay.textContent     = fmt(grand);
+		partialPaymentDisplay.textContent = fmt(partial);
+		amountDueDisplay.textContent      = fmt(due > 0 ? due : 0);
+	}
+
+	/* ── Validation ── */
+	function validateBeforeSubmit() {
+		const invNo   = document.getElementById("salesInvoiceNumber").value.trim();
+		const invDate = document.getElementById("salesInvoiceDate").value.trim();
+		const agent   = document.getElementById("salesAgent").value.trim();
+		const cust    = document.getElementById("customerDropdown").value.trim();
+		if (!invNo || !invDate || !agent || !cust) {
+			alert("Please fill required fields: Invoice No., Date, Sales Agent, Customer.");
+			return false;
+		}
+		let hasItem = false;
+		document.querySelectorAll("#salesItemsTbody tr").forEach(tr => {
+			if (tr.querySelector(".sales-code").value.trim() || tr.querySelector(".sales-desc").value.trim()) hasItem = true;
+		});
+		if (!hasItem) { alert("Please add at least one invoice item."); return false; }
+		return true;
+	}
+
+	/* ── Clear ── */
+	function clearAll() {
+		if (!confirm("Clear all fields?")) return;
+		["salesInvoiceDate","plateNo","salesAgent","customerDropdown","customerAddress","terms","notes","discountSummary"]
+			.forEach(id => { document.getElementById(id).value = ""; });
+		
+		// Keep existing rows but clear their values
+		document.querySelectorAll("#salesItemsTbody input, #salesItemsTbody select").forEach(el => {
+			if (el.classList.contains("sales-qty")) el.value = "1";
+			else if (el.classList.contains("sales-rate")) el.value = "1.00";
+			else if (el.classList.contains("sales-unit")) el.value = "PC";
+			else if (el.classList.contains("sales-amount")) el.value = "";
+			else el.value = "";
+		});
+		
+		document.querySelectorAll("#salesReturnsTbody input, #salesReturnsTbody select").forEach(el => {
+			if (el.classList.contains("returns-qty")) el.value = "1";
+			else if (el.classList.contains("returns-rate")) el.value = "1.00";
+			else if (el.classList.contains("returns-unit")) el.value = "PC";
+			else if (el.classList.contains("returns-amount")) el.value = "";
+			else el.value = "";
+		});
+		
+		document.querySelectorAll("#salesPaymentsTbody input, #salesPaymentsTbody select").forEach(el => {
+			if (el.classList.contains("pay-amount")) el.value = "";
+			else if (el.classList.contains("pay-date")) el.value = "";
+			else if (el.classList.contains("pay-bank")) el.value = "";
+			else if (el.classList.contains("pay-cheque")) el.value = "";
+			else if (el.classList.contains("pay-type")) el.value = "cash";
+			else if (el.classList.contains("pay-status")) el.value = "valid";
+		});
+		
+		updateReturnsProductList();
+		updateSummary();
+	}
+
+	/* ── Button bindings ── */
+	document.getElementById("btnClear").addEventListener("click", clearAll);
+
+	document.getElementById("btnPrint").addEventListener("click", () => {
+		if (!validateBeforeSubmit()) return;
+		document.getElementById("actionType").value = "save";
+		document.getElementById("salesInvoiceForm").submit();
+		window.print();
+	});
+
+	document.getElementById("btnDelete").addEventListener("click", () => {
+		if (!confirm("Delete this invoice?")) return;
+		document.getElementById("actionType").value = "delete";
+		document.getElementById("salesInvoiceForm").submit();
+	});
+
+	document.getElementById("salesInvoiceForm").addEventListener("submit", e => {
+		if (!validateBeforeSubmit()) { e.preventDefault(); return; }
+		
+		// Don't remove empty rows, just let them submit with empty values
+		document.getElementById("paymentStatus").value = "paid";
+	});
+
+	/* ── Customer address fill ── */
+	customerDropdown.addEventListener("change", () => {
+		const opt = customerDropdown.options[customerDropdown.selectedIndex];
+		customerAddress.value = opt ? (opt.getAttribute("data-address") || "") : "";
+	});
+
+	/* ── Invoice date blur ── */
+	salesInvoiceDate.addEventListener("blur", () => {
+		const f = parseDate(salesInvoiceDate.value);
+		if (f) { salesInvoiceDate.value = f; invoiceDate = new Date(f); }
+		document.querySelectorAll("#salesPaymentsTbody tr").forEach(tr => updatePaymentDays(tr));
+	});
+
+	/* ── Discount blur ── */
+	discountSummary.addEventListener("blur", () => {
+		const v = parseFloat(discountSummary.value);
+		discountSummary.value = v ? fmt(v) : "";
+		updateSummary();
+	});
+
+	/* ── Initialize ── */
+	wireAllRows();
+	updateReturnsProductList();
+	updateSummary();
+
+    /* ── Lock if deleted ── */
+    const IS_DELETED = {{ is_deleted|yesno:"true,false" }};
+    if (IS_DELETED) {
+        document.querySelectorAll("#salesInvoiceForm input, #salesInvoiceForm select, #salesInvoiceForm textarea")
+            .forEach(el => {
+            if (el.type === "hidden") return;
+            el.disabled = true;
+            });
+
+        const btnPrint = document.getElementById("btnPrint");
+        const btnClear = document.getElementById("btnClear");
+        const btnSave  = document.getElementById("btnSave");
+        const btnDel   = document.getElementById("btnDelete");
+
+        if (btnClear) btnClear.disabled = true;
+        if (btnSave)  btnSave.disabled  = false;
+        if (btnDel)   btnDel.disabled   = false;
+
+        if (btnPrint) btnPrint.disabled = false;
+    }
+})();
+</script>
+{% endblock %}

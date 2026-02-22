@@ -1,306 +1,226 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block header_tabs %}
+<div class="tabs">
+    <a class="tab active" href="?tab=sales">Sales</a>
+</div>
+{% endblock %}
 
 {% block content %}
+<div class="page-wrap">
+    <!-- Sales Search Tab -->
+    {% if active_tab == 'sales' %}
+        <div id="sales-search">
+            <h1 class="page-title">Sales Search</h1>
 
-<div class="container" style="max-width: 1400px;">
-    <ul class="nav nav-tabs mb-4">
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'sales' %}active{% endif %}" href="?tab=sales">
-            Sales Search
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'purchasing' %}active{% endif %}" href="?tab=purchasing">
-            Purchasing Search
-            </a>
-        </li>
-    </ul>
-
-    <!-- Tab Content -->
-    <div class="tab-content">
-        <!-- Sales Search Tab -->
-        <div class="tab-pane {% if active_tab == 'sales' %}show active{% endif %}" id="sales-search">
-            <h2>Sales Search</h2>
-
-            <form method="GET" action="{% url 'main_page' %}">
+            <form method="GET" action="{% url 'main_page' %}" class="pf-card">
                 <input type="hidden" name="tab" value="sales">
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <label for="sales_invoice_number" class="form-label">Invoice Number</label>
-                        <input type="text" class="form-control" id="sales_invoice_number" name="sales_invoice_number" 
-                               value="{{ request.GET.sales_invoice_number }}" placeholder="Search by invoice number">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="sales_customer" class="form-label">Customer</label>
-                        <select class="form-control" id="sales_customer" name="sales_customer">
-                            <option value="">All Customers</option>
-                            {% for customer in customers %}
-                                <option value="{{ customer.id }}" {% if request.GET.sales_customer == customer.id|stringformat:"i" %}selected{% endif %}>
-                                    {{ customer.customer_name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="sales_start_date" class="form-label">From Date</label>
-                        <input type="date" class="form-control" id="sales_start_date" name="sales_start_date" 
-                               value="{{ request.GET.sales_start_date }}">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="sales_end_date" class="form-label">To Date</label>
-                        <input type="date" class="form-control" id="sales_end_date" name="sales_end_date" 
-                               value="{{ request.GET.sales_end_date }}">
-                    </div>
-                </div>
                 
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <label for="sales_payment_status" class="form-label">Payment Status</label>
-                        <select class="form-control" id="sales_payment_status" name="sales_payment_status">
-                            <option value="">All Status</option>
-                            <option value="paid" {% if request.GET.sales_payment_status == 'paid' %}selected{% endif %}>Paid</option>
-                            <option value="unpaid" {% if request.GET.sales_payment_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
-                        </select>
+                <div class="pf-form-cols">
+                    <div class="pf-col">
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_invoice_number">Invoice No.</label>
+                            <input type="text" class="pf-input" id="sales_invoice_number" name="sales_invoice_number" 
+                                   value="{{ request.GET.sales_invoice_number }}" placeholder="Search by invoice number">
+                        </div>
+                        
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_customer">Customer</label>
+                            <select class="pf-select" id="sales_customer" name="sales_customer">
+                                <option value="">All Customers</option>
+                                {% for customer in customers %}
+                                    <option value="{{ customer.customer_id }}" {% if request.GET.sales_customer == customer.customer_id %}selected{% endif %}>
+                                        {{ customer.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_payment_status">Payment Status</label>
+                            <select class="pf-select" id="sales_payment_status" name="sales_payment_status">
+                                <option value="">All Status</option>
+                                <option value="Paid" {% if request.GET.sales_payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                                <option value="Unpaid" {% if request.GET.sales_payment_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+                                <option value="Partial" {% if request.GET.sales_payment_status == 'Partial' %}selected{% endif %}>Partial</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label for="sales_payment_type" class="form-label">Payment Type</label>
-                        <select class="form-control" id="sales_payment_type" name="sales_payment_type">
-                            <option value="">All Types</option>
-                            <option value="cash" {% if request.GET.sales_payment_type == 'cash' %}selected{% endif %}>Cash</option>
-                            <option value="cheque" {% if request.GET.sales_payment_type == 'cheque' %}selected{% endif %}>Cheque</option>
-                        </select>
+
+                    <div class="pf-col">
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_start_date">From Date</label>
+                            <input type="date" class="pf-input" id="sales_start_date" name="sales_start_date" 
+                                   value="{{ request.GET.sales_start_date }}">
+                        </div>
+                        
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_end_date">To Date</label>
+                            <input type="date" class="pf-input" id="sales_end_date" name="sales_end_date" 
+                                   value="{{ request.GET.sales_end_date }}">
+                        </div>
+                        
+                        <div class="pf-field">
+                            <label class="pf-label" for="sales_payment_type">Payment Type</label>
+                            <select class="pf-select" id="sales_payment_type" name="sales_payment_type">
+                                <option value="">All Types</option>
+                                <option value="Cash" {% if request.GET.sales_payment_type == 'Cash' %}selected{% endif %}>Cash</option>
+                                <option value="Cheque" {% if request.GET.sales_payment_type == 'Cheque' %}selected{% endif %}>Cheque</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary me-2">Search Sales</button>
-                    <a href="{% url 'main_page' %}?tab=sales" class="btn btn-secondary">Clear</a>
+                <div class="pf-actions">
+                    <a href="{% url 'main_page' %}?tab=sales" class="pf-btn pf-btn-clear">Clear</a>
+                    <button type="submit" class="pf-btn pf-btn-save">Search</button>
                 </div>
             </form>
 
-            <hr>
-
-            <h3>Sales Invoices</h3>
-            <div class="table-responsive">
-                <!-- In the sales invoices table -->
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Invoice No.</th>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Total</th>
-                            <th>Payment Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for invoice in sales_invoices %}
-                        <tr>
-                            <td>{{ invoice.invoice_number }}</td>
-                            <td>{{ invoice.invoice_date }}</td>
-                            <td>{{ invoice.customer_name }}</td>
-                            <td>₱{{ invoice.grand_total|floatformat:2 }}</td>
-                            <td>
-                                {% if invoice.payment_type == 'cash' %} Cash {% else %} Cheque {% endif %}
-                            </td>
-
-
-                            <!-- FIXED ACTIONS COLUMN -->
-                            <td>
-                                {% if invoice.id %}
-                                    <a href="{% url 'sales_invoice_print' invoice.id %}" class="btn btn-sm btn-secondary">Print</a>
-                                {% else %}
-                                    <span class="text-muted">Print unavailable</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="row mt-4">
-                <div class="col-md-3">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Sales Invoices</h5>
-                            <h3 class="card-text">{{ sales_invoices|length }}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Sales</h5>
-                            <h3 class="card-text">₱{{ total_sales|floatformat:2 }}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-warning">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Received</h5>
-                            <h3 class="card-text">₱{{ total_sales_received|floatformat:2 }}</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane {% if active_tab == 'purchasing' %}show active{% endif %}" id="purchasing-search">
-            <h2>Purchasing Search</h2>
-
-            <form method="GET" action="{% url 'main_page' %}">
-                <input type="hidden" name="tab" value="purchasing">
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <label for="purchase_invoice_number" class="form-label">Purchase Invoice Number</label>
-                        <input type="text" class="form-control" id="purchase_invoice_number" name="purchase_invoice_number" 
-                               value="{{ request.GET.purchase_invoice_number }}" placeholder="Search by invoice number">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="supplier" class="form-label">Supplier</label>
-                        <select class="form-control" id="supplier" name="supplier">
-                            <option value="">All Suppliers</option>
-                            {% for supplier in suppliers %}
-                                <option value="{{ supplier.id }}" {% if request.GET.supplier == supplier.id|stringformat:"i" %}selected{% endif %}>
-                                    {{ supplier.supplier_name }}
-                                </option>
+            <h2 class="inv-section-title">Sales Invoices</h2>
+            
+            <div class="pf-card">
+                <div class="pf-table-wrap">
+                    <table class="pf-table" id="invoices-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice No.</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th class="t-right">Total</th>
+                                <th>Payment Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in sales_invoices %}
+                            <tr class="clickable-row" data-invoice-id="{{ invoice.invoice_no }}" style="cursor: pointer;" title="Double-click to edit">
+                                <td class="col-id">{{ invoice.invoice_no }}</td>
+                                <td>{{ invoice.date|date:"m/d/y" }}</td>
+                                <td class="col-desc">{{ invoice.customer.name|default:"-" }}</td>
+                                <td class="t-right">₱{{ invoice.grand_total|floatformat:2 }}</td>
+                                <td>
+                                    {# You don't have payment_type in your model yet, so show a default #}
+                                    <span class="badge status-default">Cash</span>
+                                </td>
+                                <td>
+                                    {% if invoice.payment_status == "Paid" %}
+                                        <span class="status-badge status-active">Paid</span>
+                                    {% elif invoice.payment_status == "Partial" %}
+                                        <span class="status-badge status-inactive">Partial</span>
+                                    {% else %}
+                                        <span class="status-badge status-default">Unpaid</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="t-center" style="padding: 2rem; color: #9ca3af;">No sales invoices found.</td>
+                            </tr>
                             {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="purchase_start_date" class="form-label">From Date</label>
-                        <input type="date" class="form-control" id="purchase_start_date" name="purchase_start_date" 
-                               value="{{ request.GET.purchase_start_date }}">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label for="purchase_end_date" class="form-label">To Date</label>
-                        <input type="date" class="form-control" id="purchase_end_date" name="purchase_end_date" 
-                               value="{{ request.GET.purchase_end_date }}">
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
-                
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <label for="purchase_payment_status" class="form-label">Payment Status</label>
-                        <select class="form-control" id="purchase_payment_status" name="purchase_payment_status">
-                            <option value="">All Status</option>
-                            <option value="paid" {% if request.GET.purchase_payment_status == 'paid' %}selected{% endif %}>Paid</option>
-                            <option value="unpaid" {% if request.GET.purchase_payment_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="purchase_payment_type" class="form-label">Payment Type</label>
-                        <select class="form-control" id="purchase_payment_type" name="purchase_payment_type">
-                            <option value="">All Types</option>
-                            <option value="cash" {% if request.GET.purchase_payment_type == 'cash' %}selected{% endif %}>Cash</option>
-                            <option value="cheque" {% if request.GET.purchase_payment_type == 'cheque' %}selected{% endif %}>Cheque</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary me-2">Search Purchases</button>
-                    <a href="{% url 'main_page' %}?tab=purchasing" class="btn btn-secondary">Clear</a>
-                </div>
-            </form>
-
-            <hr>
-
-            <h3>Purchase Invoices</h3>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Invoice No.</th>
-                            <th>Date</th>
-                            <th>Supplier</th>
-                            <th>Total Amount</th>
-                            <th>Amount Due</th>
-                            <th>Payment Type</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for invoice in purchase_invoices %}
-                        <tr>
-                            <td>{{ invoice.invoice_number }}</td>
-                            <td>{{ invoice.invoice_date }}</td>
-                            <td>{{ invoice.supplier_name }}</td>
-                            <td>₱{{ invoice.total_amount|floatformat:2 }}</td>
-                            <td>
-                                <span class="{% if invoice.amount_due > 0 %}text-danger{% else %}text-success{% endif %}">
-                                    ₱{{ invoice.amount_due|floatformat:2 }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge 
-                                    {% if invoice.payment_type == 'cash' %}bg-success
-                                    {% elif invoice.payment_type == 'cheque' %}bg-warning
-                                    {% else %}bg-danger{% endif %}">
-                                    {{ invoice.payment_type|title }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if invoice.amount_due == 0 %}
-                                    <span class="badge bg-success">Paid</span>
-                                {% elif invoice.payment_amount > 0 %}
-                                    <span class="badge bg-warning">Partial</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Unpaid</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-primary">Print</a>
-                                <a href="#" class="btn btn-sm btn-warning">Edit</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center">No purchase invoices found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
 
-            <!-- Purchasing Summary Stats -->
-            <div class="row mt-4">
-                <div class="col-md-3">
-                    <div class="card text-white bg-primary">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Purchase Invoices</h5>
-                            <h3 class="card-text">{{ purchase_invoices|length }}</h3>
-                        </div>
-                    </div>
+            <div class="stats-grid" style="margin-top: 24px;">
+                <div class="stat-card stat-primary">
+                    <div class="stat-title">Total Invoices</div>
+                    <div class="stat-value">{{ sales_invoices|length }}</div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Purchases</h5>
-                            <h3 class="card-text">₱{{ total_purchases|floatformat:2 }}</h3>
-                        </div>
-                    </div>
+                <div class="stat-card stat-success">
+                    <div class="stat-title">Total Sales</div>
+                    <div class="stat-value">₱{{ total_sales|floatformat:2 }}</div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card text-white bg-warning">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Paid</h5>
-                            <h3 class="card-text">₱{{ total_purchases_paid|floatformat:2 }}</h3>
-                        </div>
-                    </div>
+                <div class="stat-card stat-warning">
+                    <div class="stat-title">Total Received</div>
+                    <div class="stat-value">₱{{ total_sales_received|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all rows with class 'clickable-row'
+    const rows = document.querySelectorAll('.clickable-row');
+    
+    // Add double-click event listener to each row
+    rows.forEach(row => {
+        row.addEventListener('dblclick', function() {
+            const invoiceId = this.dataset.invoiceId;
+            if (invoiceId) {
+                window.location.href = `/invoice/sales/${invoiceId}/update/`;
+            }
+        });
+    });
+});
+</script>
+
+<style>
+/* Additional styles for stats cards to match your theme */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e9f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 24px;
+}
+
+.stat-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+}
+
+.stat-success {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    border: none;
+}
+
+.stat-warning {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: white;
+    border: none;
+}
+
+.stat-title {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.text-danger { color: #ef4444; }
+.text-success { color: #16a34a; }
+
+/* Badge styles to match your status badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-active { background: #dcfce7; color: #16a34a; }
+.status-inactive { background: #fee2e2; color: #ef4444; }
+.status-default { background: #f3f4f6; color: #6b7280; }
+</style>
 {% endblock %}

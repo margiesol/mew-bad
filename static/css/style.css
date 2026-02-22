@@ -1,0 +1,869 @@
+/* ================================
+   style.css — MEW Corporation
+   Profiles: Product, Customer, Agent, Bank
+   ================================ */
+
+/* ----- Reset ----- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #212529;
+  background: #f0f2f5;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ================= TOPBAR ================= */
+.topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 52px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ================= HAMBURGER ================= */
+.hamburger {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.hamburger span {
+  height: 2px;
+  width: 20px;
+  background: #333;
+  border-radius: 4px;
+}
+
+/* ================= TABS (in topbar) ================= */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 100%;
+}
+
+.tab {
+  position: relative;
+  padding: 0;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.tab:hover { color: #111827; }
+
+.tab.active {
+  color: #111827;
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 2px 2px 0 0;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 250px;
+  height: 100%;
+  background-color: #6c757d;
+  color: white;
+  transition: left 0.25s ease;
+  z-index: 1050;
+  padding-top: 20px;
+}
+.sidebar.active { left: 0; }
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 14px 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+}
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.sidebar-link {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  margin: 4px 10px;
+}
+.sidebar-link:hover { background: rgba(255,255,255,0.15); }
+
+.sidebar-close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+}
+.sidebar-close:hover { background: rgba(255,255,255,0.15); }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1049;
+  display: none;
+}
+.overlay.active { display: block; }
+
+/* ================= PAGE WRAPPER ================= */
+main { padding: 0; }
+
+.page-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+/* ================= PAGE TITLE ================= */
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.2px;
+}
+
+/* ================= CARD ================= */
+.pf-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e9f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 28px 32px;
+  margin-bottom: 16px;
+}
+
+/* ================= TWO-COLUMN FORM LAYOUT ================= */
+/* Used for Product, Customer, Agent, Bank forms */
+
+.pf-form-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 48px;
+  align-items: start;
+}
+
+/* Each field: label on left (~110px), input on right */
+.pf-field {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 0 10px;
+  margin-bottom: 16px;
+}
+
+/* Full-width field (no label column, just spans) */
+.pf-field-full {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 0 10px;
+  margin-bottom: 16px;
+  grid-column: 1 / -1;
+}
+
+/* Inline mini fields (Quantity + Price side by side) */
+.pf-field-inline {
+  display: grid;
+  grid-template-columns: 110px 130px 50px 1fr;
+  align-items: center;
+  gap: 0 10px;
+  margin-bottom: 16px;
+}
+
+/* ================= LABELS ================= */
+.pf-label {
+  font-size: 14px;
+  font-weight: 400;        /* regular weight, not bold */
+  color: #374151;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Inline label used between quantity and price */
+.pf-label-inline {
+  font-size: 14px;
+  font-weight: 400;
+  color: #374151;
+  text-align: right;
+}
+
+/* ================= INPUTS ================= */
+.pf-input,
+.pf-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: auto;
+}
+
+.pf-input::placeholder { color: #9ca3af; }
+
+.pf-input:focus,
+.pf-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+.pf-input.is-invalid,
+.pf-select.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+}
+
+/* Status select — narrow like Figma (same width as quantity) */
+.pf-select-status {
+  width: 180px;
+}
+
+/* Smaller input for quantity */
+.pf-input-sm {
+  max-width: 130px;
+}
+
+/* ================= VALIDATION ERRORS ================= */
+.help-err {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  font-size: 9px;
+  color: #ef4444;
+  white-space: nowrap;
+}
+.help-err.show { display: block; }
+
+.pf-input.is-search-mode {
+  border: 1px solid #eab308;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25);
+  background-color: #ffffff;
+}
+
+/* Yellow "Search mode" text */
+.search-hint {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  font-size: 9px;
+  color: #eab308;
+  white-space: nowrap;
+}
+
+.search-hint.show {
+  display: block;
+}
+
+/* ================= ACTION BUTTONS ROW ================= */
+.pf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+/* Rounded-rectangle buttons (not pill) */
+.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 20px;
+  border-radius: 10px;     /* rounded corners, not oval */
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  transition: filter 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.pf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pf-btn-clear   { background: #dbeafe; color: #2563eb; }
+.pf-btn-clear:hover   { filter: brightness(0.95); }
+
+.pf-btn-save    { background: #dcfce7; color: #16a34a; }
+.pf-btn-save:hover    { filter: brightness(0.95); }
+
+.pf-btn-delete  { background: #fee2e2; color: #ef4444; }
+.pf-btn-delete:hover  { filter: brightness(0.95); }
+
+.pf-btn-search  { background: #374151; color: #ffffff; }
+.pf-btn-search:hover  { background: #1f2937; }
+
+/* ================= TABLE ================= */
+.pf-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e5e9f0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.pf-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 13.5px;
+}
+
+.pf-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 700;        /* bold headers like Figma */
+  color: #374151;
+  border-bottom: 1px solid #e5e9f0;
+  text-align: left;      /* default left for most columns */
+  white-space: nowrap;
+  z-index: 1;
+}
+
+/* Description column header stays left-aligned */
+.pf-table thead th.col-desc { text-align: left; }
+
+.pf-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f3f6;
+  color: #374151;
+  vertical-align: middle;
+  text-align: left;      /* default center for most columns */
+}
+
+/* Description column data stays left-aligned */
+.pf-table tbody td.col-desc { text-align: left; }
+.pf-table tbody td { white-space: nowrap; }
+
+.pf-table tbody tr:last-child td { border-bottom: none; }
+.pf-table tbody tr:hover { background: #f5f7ff; cursor: pointer; }
+
+/* ID column bold */
+.pf-table tbody tr td.col-id { font-weight: 700; }
+
+/* Status badge — colored pill inside table cell */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-active   { background: #dcfce7; color: #16a34a; }
+.status-inactive { background: #fee2e2; color: #ef4444; }
+.status-default  { background: #f3f4f6; color: #6b7280; }
+
+.t-center { text-align: center; }
+.t-right  { text-align: right; }
+
+/* ================= MODAL ================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  z-index: 2000;
+}
+.modalx {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 2001;
+  place-items: center;
+  padding: 1rem;
+}
+.modal-backdrop.open,
+.modalx.open { display: grid; }
+
+.modal-card {
+  width: min(500px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.modal-title { font-weight: 700; font-size: 15px; color: #111827; }
+
+.modal-close {
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #6b7280;
+}
+.modal-close:hover { background: #f3f4f6; }
+
+.modal-body { padding: 16px 18px; }
+.modal-sub  { font-size: 13px; color: #6b7280; margin: 8px 0 6px; }
+
+.modal-foot {
+  padding: 12px 18px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Key-value in modal */
+.kv { width: 100%; border-collapse: collapse; }
+.kv th, .kv td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: 13px;
+}
+.kv th { width: 140px; color: #6b7280; font-weight: 600; text-align: left; }
+
+/* Modal buttons (reuse pf-btn but rectangle) */
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f9fafb;
+  color: #374151;
+  transition: background 0.15s;
+}
+.modal-btn:hover { background: #e5e7eb; }
+
+.modal-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.modal-btn-primary:hover { background: #1d4ed8; }
+
+/* ================= SINGLE-LINE FORM ROW (Agent, Bank) ================= */
+/* All fields in one horizontal row: label + input repeated */
+.pf-form-row {
+  display: flex;
+  align-items: center;
+  gap: 0 20px;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+}
+
+.pf-form-row .pf-field {
+  display: flex;
+  align-items: center;
+  gap: 0 10px;
+  margin-bottom: 0;
+  flex: 1;
+}
+
+/* Fixed-width fields in single row */
+.pf-form-row .pf-field-narrow {
+  flex: 0 0 auto;
+}
+
+/* Customer 3-col row: Contact Person | Phone No. | Area */
+.pf-row-3 {
+  display: grid;
+  grid-template-columns: 1.5fr 1.1fr 1fr;
+  gap: 0 20px;
+  margin-bottom: 16px;
+}
+
+.pf-row-3 .pf-field {
+  margin-bottom: 0;
+}
+
+/* Full-width address row */
+.pf-row-full {
+  margin-bottom: 16px;
+}
+
+.pf-row-full .pf-field {
+  margin-bottom: 0;
+  grid-template-columns: 100px 1fr;
+}
+@media (max-width: 900px) {
+  .pf-form-cols { grid-template-columns: 1fr; }
+  .pf-field-full { grid-column: auto; }
+  .pf-field-inline { grid-template-columns: 100px 1fr; gap: 8px 10px; }
+  .pf-input-sm { max-width: 100%; }
+  .pf-card { padding: 18px 16px; }
+}
+
+/* ================================
+   INVOICE - Sales Invoice Page
+   ================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Apply DM Sans to the entire invoice page ── */
+.inv-page,
+.inv-page *,
+.inv-page input,
+.inv-page select,
+.inv-page textarea,
+.inv-page button {
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Card ── */
+.inv-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e9f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 28px 32px;
+    margin-bottom: 16px;
+}
+
+/* ── Section title (outside cards) ── */
+.inv-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin: 20px 0 8px;
+    letter-spacing: -0.2px;
+}
+
+/* ── Header: 2-col grid ── */
+.inv-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 48px;
+}
+.inv-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Individual field: label (110px) + input */
+.inv-field {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 0 10px;
+    margin-bottom: 16px;
+}
+
+/* Date + Plate No. share one row — two inv-fields side by side */
+.inv-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+    margin-bottom: 0;
+}
+/* fields inside inv-row-2 have no bottom margin — the row itself provides it */
+.inv-row-2 .inv-field {
+    margin-bottom: 16px;
+}
+
+/* ── Labels ── */
+.inv-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #374151;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ── Inputs & selects ── */
+.inv-input,
+.inv-select {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: auto;
+}
+.inv-input::placeholder { color: #9ca3af; }
+.inv-input:focus, .inv-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+.inv-input[readonly] {
+    background: #f9fafb;
+    color: #6b7280;
+}
+.inv-input.t-right { text-align: right; }
+
+/* Textarea matches input height rhythm */
+.inv-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #111827;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.inv-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+/* Received + Terms on one row: label | checkbox | label | select */
+.inv-field-2 {
+    display: grid;
+    grid-template-columns: 110px auto 80px 1fr;
+    align-items: center;
+    gap: 0 10px;
+    margin-bottom: 16px;
+}
+.inv-field-2 input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* ── Mini stats strip ── */
+.invoice-mini-stats {
+    display: flex;
+    margin-top: 4px;
+}
+.invoice-stat {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+}
+.invoice-stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+.invoice-stat-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* ── Table wrapper ── */
+.inv-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid #e5e9f0;
+    background: #fff;
+    /* is-1row: show exactly 1 body row (thead ~37px + 1 row ~36px) */
+    max-height: 240px;
+}
+.inv-table-wrap.is-1row { max-height: 96px; }
+
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+}
+.inv-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #374151;
+    border-bottom: 1px solid #e5e9f0;
+    white-space: nowrap;
+    z-index: 1;
+}
+.inv-table tbody td {
+    padding: 6px 14px;
+    border-bottom: 1px solid #f1f3f6;
+    color: #374151;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.inv-table tbody tr:last-child td { border-bottom: none; }
+/* No hover highlight */
+.inv-table tbody tr:hover { background: transparent; cursor: default; }
+
+/* Flat cells — completely invisible, no interaction states */
+.inv-cell {
+    width: 100%;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+    color: #374151;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.inv-cell:focus,
+.inv-cell:hover,
+.inv-cell:active,
+.inv-cell:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+.inv-cell:-webkit-autofill,
+.inv-cell:-webkit-autofill:hover,
+.inv-cell:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    transition: background-color 9999s ease-out 0s;
+}
+/* Selects need appearance restored so the arrow shows */
+.inv-cell.inv-select-cell { appearance: auto; -webkit-appearance: auto; }
+
+/* ── Summary: 2-col grid ── */
+.inv-summary-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 0 48px;
+    margin-bottom: 20px;
+}
+.inv-summary-left {
+    display: flex;
+    flex-direction: column;
+}
+.inv-summary-right {
+    border-left: 1px solid #e5e9f0;
+    padding-left: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.inv-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f3f6;
+}
+.inv-total-row:last-child { border-bottom: none; }
+.inv-total-divider {
+    height: 2px;
+    background: #e5e9f0;
+    margin: 2px 0;
+}
+.inv-total-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+.inv-total-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+    font-family: 'DM Mono', monospace;
+}
+.inv-total-due .inv-total-label { font-size: 15px; }
+.inv-total-due .inv-total-value  { font-size: 20px; }
+
+/* ── Action buttons ── */
+.inv-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+.inv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    user-select: none;
+    transition: filter 0.15s;
+    white-space: nowrap;
+}
+.inv-btn:hover { filter: brightness(0.95); }
+.inv-btn-clear  { background: #dbeafe; color: #2563eb; }
+.inv-btn-print  { background: #374151; color: #ffffff; }
+.inv-btn-print:hover { background: #1f2937; filter: none; }
+.inv-btn-save   { background: #dcfce7; color: #16a34a; }
+.inv-btn-delete { background: #fee2e2; color: #ef4444; }

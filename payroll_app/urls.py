@@ -11,10 +11,12 @@ urlpatterns = [
     path("logout/", views.dev_logout, name="dev_logout"),
 
     # Invoices (these fix your base.html links)
-    path("create_invoice/", views.create_invoice, name="create_invoice"),
-    path("sales_invoice/create/", views.sales_invoice_create, name="sales_invoice_create"),
-    path("sales_invoice/<str:invoice_id>/print/", views.sales_invoice_print, name="sales_invoice_print"),
-    path("sales_invoice/<str:invoice_id>/details/", views.sales_invoice_details, name="sales_invoice_details"),
+    # path("create_invoice/", views.create_invoice, name="create_invoice"),
+    path("invoice/sales/create/", views.sales_invoice_create, name="sales_invoice_create"),
+    path("invoice/sales/<str:invoice_id>/print/", views.sales_invoice_print, name="sales_invoice_print"),
+    path("invoice/sales/<str:invoice_id>/details/", views.sales_invoice_details, name="sales_invoice_details"),
+    path("invoice/sales/<str:invoice_id>/update/", views.sales_invoice_update, name="sales_invoice_update"),
+    path("invoice/sales/<str:invoice_id>/delete/", views.sales_invoice_delete, name="sales_invoice_delete"),
 
     # Profiles
     path("profiles/", views.profiles, name="profiles"),

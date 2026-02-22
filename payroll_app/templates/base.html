@@ -4,7 +4,7 @@
 <html>
 <head>
 	<title>MEW System</title>
-	<link rel="stylesheet" href="{% static '/css/style.css' %}">
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
 			</div>
 
 			<a class="sidebar-link" href="{% url 'main_page' %}">Invoice List</a>
-			<a class="sidebar-link" href="{% url 'create_invoice' %}">Create Invoice</a>
+			<a class="sidebar-link" href="{% url 'sales_invoice_create' %}">Create Invoice</a>
 			<a class="sidebar-link" href="{% url 'profiles' %}">Profiles</a>
 
 			<hr style="border-color: rgba(255,255,255,0.3);">
