@@ -275,10 +275,12 @@ main { padding: 0; }
 
 /* ================= VALIDATION ERRORS ================= */
 .help-err {
-  display: none;
-  font-size: 12px;
+  position: absolute;
+  top: -14px;
+  left: 0;
+  font-size: 9px;
   color: #ef4444;
-  margin-top: 3px;
+  white-space: nowrap;
 }
 .help-err.show { display: block; }
 
@@ -290,10 +292,12 @@ main { padding: 0; }
 
 /* Yellow "Search mode" text */
 .search-hint {
-  display: none;
-  font-size: 12px;
-  margin-top: 3px;
+  position: absolute;
+  top: -14px;
+  left: 0;
+  font-size: 9px;
   color: #eab308;
+  white-space: nowrap;
 }
 
 .search-hint.show {
@@ -365,7 +369,7 @@ main { padding: 0; }
   font-weight: 700;        /* bold headers like Figma */
   color: #374151;
   border-bottom: 1px solid #e5e9f0;
-  text-align: center;      /* default center for most columns */
+  text-align: left;      /* default left for most columns */
   white-space: nowrap;
   z-index: 1;
 }
@@ -378,11 +382,12 @@ main { padding: 0; }
   border-bottom: 1px solid #f1f3f6;
   color: #374151;
   vertical-align: middle;
-  text-align: center;      /* default center for most columns */
+  text-align: left;      /* default center for most columns */
 }
 
 /* Description column data stays left-aligned */
 .pf-table tbody td.col-desc { text-align: left; }
+.pf-table tbody td { white-space: nowrap; }
 
 .pf-table tbody tr:last-child td { border-bottom: none; }
 .pf-table tbody tr:hover { background: #f5f7ff; cursor: pointer; }
@@ -525,7 +530,7 @@ main { padding: 0; }
 /* Customer 3-col row: Contact Person | Phone No. | Area */
 .pf-row-3 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1.1fr 1fr;
   gap: 0 20px;
   margin-bottom: 16px;
 }
