@@ -188,8 +188,8 @@
 									</select>
 								</td>
 								<td class="t-right"><input class="inv-cell returns-price" name="returns[{{ forloop.counter0 }}][price]" inputmode="decimal" placeholder="0.00"></td>
-								<td class="t-center"><input class="inv-cell returns-rate" name="returns[{{ forloop.counter0 }}][rate]" value="1.00" inputmode="decimal"></td>
-								<td class="t-right"><input class="inv-cell returns-amount" name="returns[{{ forloop.counter0 }}][amount]" readonly placeholder="0.00"></td>
+								<td class="t-center"><input class="inv-cell returns-rate" name="returns[{{ forloop.counter0 }}][rate]" value="{{ record.rate }}" inputmode="decimal"></td>
+								<td class="t-right"><input class="inv-cell returns-amount" name="returns[{{ forloop.counter0 }}][amount]" value="{{ record.total_price|floatformat:2 }}" readonly placeholder="0.00"></td>
 								<td><button type="button" class="inv-btn-row-delete" onclick="deleteRow(this, 'salesReturnsTbody', addReturnsRow, 'returns-code', 'returns-desc')">✕</button></td>
 							</tr>
 							{% endfor %}
@@ -469,17 +469,8 @@
 
 	/* ── Wire all existing rows ── */
 	function wireAllRows() {
-		// Wire sales rows
-		document.querySelectorAll("#salesItemsTbody tr").forEach(tr => {
-			wireSalesRow(tr);
-		});
-		
-		// Wire returns rows
-		document.querySelectorAll("#salesReturnsTbody tr").forEach(tr => {
-			wireReturnsRow(tr);
-		});
-		
-		// Wire payment rows
+		document.querySelectorAll("#salesItemsTbody tr").forEach(tr => wireSalesRow(tr));
+		document.querySelectorAll("#salesReturnsTbody tr").forEach(tr => wireReturnsRow(tr));
 		document.querySelectorAll("#salesPaymentsTbody tr").forEach(tr => {
 			wirePaymentRow(tr);
 			updatePaymentRowState(tr);
@@ -573,7 +564,7 @@
 		const bank = tr.querySelector(".pay-bank");
 		const cheque = tr.querySelector(".pay-cheque");
 		const status = tr.querySelector(".pay-status");
-		
+
 		if (type === "cash") {
 			bank.value = "";
 			cheque.value = "";
@@ -602,7 +593,6 @@
 		bank.addEventListener("input", function() {
 			const bankData = document.querySelectorAll("#bankData .bank");
 			const selectedValue = this.value;
-			
 			bankData.forEach(b => {
 				const acronym = b.getAttribute("data-acronym");
 				if (acronym && selectedValue.includes(acronym)) {
@@ -611,12 +601,12 @@
 			});
 		});
 
-		type.addEventListener("change", () => { 
-			updatePaymentRowState(tr); 
-			updatePaymentDays(tr); 
-			updateSummary(); 
+		type.addEventListener("change", () => {
+			updatePaymentRowState(tr);
+			updatePaymentDays(tr);
+			updateSummary();
 		});
-		
+
 		status.addEventListener("change", updateSummary);
 
 		date.addEventListener("blur", () => {
@@ -862,8 +852,7 @@
 		if (!confirm("Clear all fields?")) return;
 		["salesInvoiceDate","plateNo","salesAgent","customerDropdown","customerAddress","terms","notes","discountSummary"]
 			.forEach(id => { document.getElementById(id).value = ""; });
-		
-		// Keep existing rows but clear their values
+
 		document.querySelectorAll("#salesItemsTbody input, #salesItemsTbody select").forEach(el => {
 			if (el.classList.contains("sales-qty")) el.value = "1";
 			else if (el.classList.contains("sales-rate")) el.value = "1.00";
@@ -871,7 +860,7 @@
 			else if (el.classList.contains("sales-amount")) el.value = "";
 			else el.value = "";
 		});
-		
+
 		document.querySelectorAll("#salesReturnsTbody input, #salesReturnsTbody select").forEach(el => {
 			if (el.classList.contains("returns-qty")) el.value = "1";
 			else if (el.classList.contains("returns-rate")) el.value = "1.00";
@@ -879,7 +868,7 @@
 			else if (el.classList.contains("returns-amount")) el.value = "";
 			else el.value = "";
 		});
-		
+
 		document.querySelectorAll("#salesPaymentsTbody input, #salesPaymentsTbody select").forEach(el => {
 			if (el.classList.contains("pay-amount")) el.value = "";
 			else if (el.classList.contains("pay-date")) el.value = "";
@@ -888,7 +877,7 @@
 			else if (el.classList.contains("pay-type")) el.value = "cash";
 			else if (el.classList.contains("pay-status")) el.value = "valid";
 		});
-		
+
 		updateReturnsProductList();
 		updateSummary();
 	}
@@ -911,8 +900,6 @@
 
 	document.getElementById("salesInvoiceForm").addEventListener("submit", e => {
 		if (!validateBeforeSubmit()) { e.preventDefault(); return; }
-		
-		// Don't remove empty rows, just let them submit with empty values
 		document.getElementById("paymentStatus").value = "paid";
 	});
 
@@ -962,26 +949,25 @@
 	updateReturnsProductList();
 	updateSummary();
 
-    /* ── Lock if deleted ── */
-    const IS_DELETED = {{ is_deleted|yesno:"true,false" }};
-    if (IS_DELETED) {
-        document.querySelectorAll("#salesInvoiceForm input, #salesInvoiceForm select, #salesInvoiceForm textarea")
-            .forEach(el => {
-            if (el.type === "hidden") return;
-            el.disabled = true;
-            });
+	/* ── Lock if deleted ── */
+	const IS_DELETED = {{ is_deleted|yesno:"true,false" }};
+	if (IS_DELETED) {
+		document.querySelectorAll("#salesInvoiceForm input, #salesInvoiceForm select, #salesInvoiceForm textarea")
+			.forEach(el => {
+				if (el.type === "hidden") return;
+				el.disabled = true;
+			});
 
-        const btnPrint = document.getElementById("btnPrint");
-        const btnClear = document.getElementById("btnClear");
-        const btnSave  = document.getElementById("btnSave");
-        const btnDel   = document.getElementById("btnDelete");
+		const btnPrint = document.getElementById("btnPrint");
+		const btnClear = document.getElementById("btnClear");
+		const btnSave  = document.getElementById("btnSave");
+		const btnDel   = document.getElementById("btnDelete");
 
-        if (btnClear) btnClear.disabled = true;
-        if (btnSave)  btnSave.disabled  = false;
-        if (btnDel)   btnDel.disabled   = false;
-
-        if (btnPrint) btnPrint.disabled = false;
-    }
+		if (btnClear) btnClear.disabled = true;
+		if (btnSave)  btnSave.disabled  = false;
+		if (btnDel)   btnDel.disabled   = false;
+		if (btnPrint) btnPrint.disabled = false;
+	}
 })();
 </script>
 {% endblock %}
