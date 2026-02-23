@@ -745,6 +745,7 @@ main { padding: 0; }
     border-bottom: 1px solid #e5e9f0;
     white-space: nowrap;
     z-index: 1;
+    text-align: left;
 }
 .inv-table tbody td {
     padding: 6px 14px;
@@ -752,6 +753,7 @@ main { padding: 0; }
     color: #374151;
     vertical-align: middle;
     white-space: nowrap;
+    text-align: left;
 }
 .inv-table tbody tr:last-child td { border-bottom: none; }
 /* No hover highlight */
@@ -772,6 +774,7 @@ main { padding: 0; }
     color: #374151;
     -webkit-appearance: none;
     appearance: none;
+    text-align: left;
 }
 .inv-cell:focus,
 .inv-cell:hover,
