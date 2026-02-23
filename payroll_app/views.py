@@ -338,9 +338,18 @@ def bank_update(request, pk):
 def bank_delete(request, pk):
     if request.method == "POST":
         get_object_or_404(Bank, bank_id=pk).delete()
+<<<<<<< HEAD
     return redirect("/profiles/?tab=bank")
 
 # ---------------- INVOICE VIEWS ADDED BY MAI ----------------
+=======
+<<<<<<< Updated upstream
+    return redirect("/profiles/?tab=bank")
+=======
+    return redirect("/profiles/?tab=bank")
+
+# ---------------- INVOICE VIEWS ADDED BY MAI PLS CHECK ALEXANDREI MARION KEITH DARREL ----------------
+>>>>>>> main
 def sales_invoice_create(request):
     if request.method == "POST":
         # Get basic form data
@@ -671,4 +680,9 @@ def sales_invoice_delete(request, invoice_id):
         invoice.is_deleted = True
         invoice.deleted_at = timezone.now()
         invoice.save(update_fields=["is_deleted", "deleted_at"])
+<<<<<<< HEAD
     return redirect("main_page")
+=======
+    return redirect("main_page")
+>>>>>>> Stashed changes
+>>>>>>> main
